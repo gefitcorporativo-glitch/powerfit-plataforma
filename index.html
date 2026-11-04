@@ -4138,7 +4138,7 @@ async function carregarGeral(){
     }).join('');
 
     // ---- Receita por grupo ----
-    const grupoLbl={planos_fitness:'Planos Fitness',piscina_infantil:'Planos Piscina Infantil',piscina_adulto:'Planos Piscina Adulto',personal_trainer:'Personal Trainer',agregadores:'Agregadores (Pass)',produtos:'Produtos',servicos_especiais:'Serviços Especiais'};
+    const grupoLbl={planos_fitness:'Planos Fitness',personal_trainer:'Personal Trainer',agregadores:'Agregadores (Pass)',produtos:'Produtos',servicos_especiais:'Serviços Especiais'};
     const porGrupo={};
     ativos.forEach(a=>{const g=a.grupo_receita||'planos_fitness';porGrupo[g]=(porGrupo[g]||0)+Number(a.valor_plano||0);});
     const maxGrupo=Math.max(1,...Object.values(porGrupo));
@@ -4172,7 +4172,7 @@ function renderAlunos(){
   if(!lista.length){tbody.innerHTML='<tr><td colspan="7" style="color:var(--td)">Nenhum aluno cadastrado ainda.</td></tr>';}
   else{
     const tipoLbl={anual:'Anual',semestral:'Semestral',trimestral:'Trimestral',mensal:'Mensal',recorrencia:'Recorrência',especial:'Especial',outros:'Outros'};
-    const grupoLbl={planos_fitness:'Fitness',piscina_infantil:'Piscina Infantil',piscina_adulto:'Piscina Adulto',personal_trainer:'Personal',agregadores:'Agregadores',produtos:'Produtos',servicos_especiais:'Serv. Especiais'};
+    const grupoLbl={planos_fitness:'Fitness',personal_trainer:'Personal',agregadores:'Agregadores',produtos:'Produtos',servicos_especiais:'Serv. Especiais'};
     const statusCor={ativo:'var(--gr)',inativo:'var(--am)',cancelado:'var(--re)'};
     tbody.innerHTML=lista.map(a=>`<tr>
       <td>${a.nome}</td>

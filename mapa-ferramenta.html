@@ -116,7 +116,7 @@ h2 .n{color:var(--ac);margin-right:8px}
 .gpasso li::before{content:'›';position:absolute;left:3px;color:var(--ac);font-weight:800}
 .dica{margin-top:10px;font-size:13.5px;color:var(--ac2);background:var(--ac-d);border-radius:9px;padding:8px 11px}
 .shot{border-radius:10px;border:1px solid var(--bd);overflow:hidden;cursor:zoom-in;background:#000;align-self:start}
-.shot img{width:100%;height:auto}
+.shot img{width:auto;max-width:100%;max-height:640px;height:auto;margin:0 auto}
 .em-breve{background:var(--s1);border:1px dashed var(--ac-m);border-radius:16px;padding:24px;color:var(--tm)}
 /* dúvidas */
 .faq{display:grid;gap:8px}
@@ -241,15 +241,15 @@ const ETAPAS=[
  {id:'leads',ic:'🎯',nm:'Central de Leads',ds:'Captação e indicação',
   oque:'Onde todo lead chega. Você cria links de captação com QR Code para eventos, anúncios e redes sociais. Cada pessoa cadastrada ganha um código para convidar amigos, e quem mais indica aparece no ranking.',
   itens:['Links de captação com QR Code e artes da campanha','Indicação digital: cada lead recebe um código e convida até 5 amigos','Ranking de indicações e impressão da lista do sorteio','Ocultar testes e repetidos sem apagar','Enviar leads filtrados direto para uma campanha do Kanban'],
-  quem:'Gestor(a) e consultor(a)',onde:'Menu lateral › Vendas › Central de Leads',quando:'Sempre que abrir uma ação de captação, e todo dia para ver quem chegou'},
+  quem:'Gestor(a) e consultor(a)',onde:'Menu lateral › Vendas › Central de Leads',quando:'Sempre que abrir uma ação de captação, e todo dia para ver quem chegou',passo:'leads'},
  {id:'campanhas',ic:'📢',nm:'Campanhas',ds:'Kanban e cadência',
   oque:'O CRM da equipe comercial. Cada campanha tem uma lista de pessoas, dividida entre os(as) consultores(as), que andam pelas etapas do Kanban seguindo a cadência de contatos com os scripts prontos.',
   itens:['Perfis: Leads Novos, Rematrícula, Ciclo de Renovação e Sucesso do Cliente','Cadência de 10 contatos em Leads Novos, com opção 1 e opção 2 em cada tentativa','📚 Scripts: biblioteca por funil, etapa e canal, pronta para copiar','Registro de cada tentativa, agendamento e venda dentro do card','Minha Agenda com atrasados, hoje e semana'],
-  quem:'Gestor(a), consultor(a) e treinador(a) (departamento técnico)',onde:'☰ Ferramentas › Campanhas',quando:'Todo dia, é a principal tela de trabalho do comercial'},
+  quem:'Gestor(a), consultor(a) e treinador(a) (departamento técnico)',onde:'☰ Ferramentas › Campanhas',quando:'Todo dia, é a principal tela de trabalho do comercial',passo:'campanha'},
  {id:'experiencias',ic:'🧪',nm:'Experiências',ds:'Aula ou semana teste',
   oque:'Controle das experiências agendadas a partir do Kanban: quem está fazendo, com qual treinador, em que dia da experiência está, e se virou matrícula.',
   itens:['Colunas: agendada, iniciada, convertida e não convertida','Checklist do primeiro dia e consultoria com o treinador','Tarefas de acompanhamento (feedback, áudio, agendamento final)','Agenda unificada de consultores e treinadores'],
-  quem:'Consultor(a), treinador(a) e gestor(a)',onde:'☰ Ferramentas › Experiências (ou Agenda)',quando:'Todo dia, enquanto houver experiência em andamento'},
+  quem:'Consultor(a), treinador(a) e gestor(a)',onde:'☰ Ferramentas › Experiências (ou Agenda)',quando:'Todo dia, enquanto houver experiência em andamento',passo:'exp'},
  {id:'matricula',ic:'💰',nm:'Matrícula',ds:'Venda registrada',
   oque:'Quando o lead fecha, a venda é registrada no próprio card da campanha. Ela entra nos números da Visão Executiva, do Painel e do Ranking, e o líder confere o lançamento.',
   itens:['💰 Registrar Venda: valor, forma de pagamento, tipo de venda','Conferência do líder em Campanhas › Vendas','Total vendido e ticket médio na Visão Executiva'],
@@ -257,11 +257,11 @@ const ETAPAS=[
  {id:'retencao',ic:'🏋️',nm:'Retenção',ds:'Planner do treinador',
   oque:'Depois da matrícula, o aluno entra na carteira de um treinador. O Planner Digital organiza a agenda, a consultoria técnica, o diário e a revisão de treino, para o aluno ficar e renovar.',
   itens:['Planner do Treinador: home, agenda, carteira e consultoria técnica','Diário do Treinador e Revisão de Treino','Gestão da Retenção: indicadores, equipe, renovações e carteiras','Atualizar Carteira: suba a planilha de alunos e distribua','Painel de Vendas: funil de experiências e follow-ups'],
-  quem:'Treinador(a), consultor(a) e gestor(a)',onde:'Menu lateral › Retenção › 🏋️ Área do Treinador',quando:'Todo dia, durante o atendimento aos alunos'},
+  quem:'Treinador(a), consultor(a) e gestor(a)',onde:'Menu lateral › Retenção › 🏋️ Área do Treinador',quando:'Todo dia, durante o atendimento aos alunos',passo:'planner'},
  {id:'nps',ic:'⭐',nm:'NPS e indicação',ds:'Satisfação do aluno',
   oque:'A pesquisa de satisfação que o aluno responde pelo celular, de 0 a 10. O resultado aparece na Visão Executiva. Aluno satisfeito é o melhor momento para pedir indicação, e a indicação volta para a Central de Leads.',
   itens:['☰ Ferramentas › ⭐ Copiar link do NPS para mandar no WhatsApp','NPS geral e NPS por experiência (consultoria, avaliação, revisão, time técnico)','Funil Feedback + Indicação no Desafio'],
-  quem:'Gestor(a) envia, aluno responde',onde:'☰ Ferramentas › ⭐ Copiar link do NPS',quando:'Após a consultoria, a avaliação física e as revisões de treino'}
+  quem:'Gestor(a) envia, aluno responde',onde:'☰ Ferramentas › ⭐ Copiar link do NPS',quando:'Após a consultoria, a avaliação física e as revisões de treino',passo:'nps'}
 ];
 const CAMADAS=[
  {t:'Gestão: acompanhar e decidir',mods:[
@@ -277,7 +277,7 @@ const CAMADAS=[
   {id:'equipe',nm:'Equipe e acessos',oque:'Cadastro de consultores(as) e treinadores(as), metas, funis e criação do login de cada pessoa com os módulos que ela pode usar.',quem:'Gestor(a)',onde:'Menu lateral › Vendas › Equipe (+ Consultor(a), + Treinador(a), 🔑 Acesso)',quando:'Na implantação e quando entrar alguém novo'},
   {id:'uc',nm:'Universidade Corporativa',oque:'A metodologia e o treinamento da equipe: os pilares da conversa comercial, a ancoragem e a jornada da conversão.',quem:'Toda a equipe',onde:'☰ Ferramentas › 🎓 Universidade Corporativa',quando:'Na integração de quem chega e nos treinamentos'},
   {id:'biblio',nm:'Biblioteca de scripts',oque:'Os scripts do dia a dia por funil e por tentativa, com opção 1 e opção 2, objeções, rotina e perfis.',quem:'Consultor(a) e gestor(a)',onde:'☰ Ferramentas › 💬 Biblioteca de scripts (ou 📚 Scripts no Kanban)',quando:'Em cada contato da cadência'},
-  {id:'pessoas',nm:'Hub de Pessoas',oque:'Contratação em etapas: o candidato faz o teste de perfil pelo celular e o gestor vê o resultado no painel.',quem:'Gestor(a) e candidatos',onde:'☰ Ferramentas › 👥 Hub de Pessoas',quando:'Em cada processo seletivo'}
+  {id:'pessoas',nm:'Hub de Pessoas',oque:'Contratação em etapas: o candidato faz o teste de perfil pelo celular e o gestor vê o resultado no painel.',quem:'Gestor(a) e candidatos',onde:'☰ Ferramentas › 👥 Hub de Pessoas',quando:'Em cada processo seletivo',passo:'pessoas'}
  ]}
 ];
 let selecionado='leads';
@@ -352,11 +352,39 @@ const TAREFAS=[
   {t:'Campanha ativada',p:'A campanha aparece em Minhas Campanhas. Clique nela para abrir o Kanban: cada pessoa da lista vira um card na coluna Lista / Iniciar cadência.',img:'mapa/kanban.jpg'},
   {t:'Trabalhar a cadência',p:'Clique no card para ver a tentativa da vez, com a opção 1 e a opção 2 da mensagem prontas para copiar. Registre o resultado e o card anda sozinho pelas etapas.',ul:['📚 Scripts: a biblioteca completa por funil, etapa e canal','💰 Registrar Venda quando fechar a matrícula'],img:'mapa/kanban-card.jpg'}
  ]},
- {id:'leads',nm:'🎯 Link de captação e sorteio',breve:true},
- {id:'exp',nm:'🧪 Registrar experiência',breve:true},
- {id:'nps',nm:'⭐ Enviar o NPS',breve:true},
- {id:'pessoas',nm:'👥 Hub de Pessoas',breve:true},
- {id:'planner',nm:'🏋️ Entrar no Planner',breve:true}
+ {id:'leads',nm:'🎯 Link de captação e sorteio',passos:[
+  {t:'Criar o link',p:'Na Central de Leads, abra Links de captação e clique em + Novo link de captação. Preencha:',ul:['Nome da campanha e o código que vai no link (só letras, números e hífen)','Origem (evento, tráfego pago, Instagram, parceria...) e a cor de destaque','Título da página, frase de apoio e data, local e horário','Artes da campanha: capa da página e capa do convidado (use "Copiar prompt" para gerar a arte)'],img:'mapa/leads-novo-link.jpg'},
+  {t:'Ligar a indicação e o sorteio',p:'No mesmo formulário, marque o sorteio e a indicação digital, defina a sigla que vai no código (ex.: POWER) e escreva os presentes de quem chega por indicação, um por linha. Clique em Salvar.',dica:'Cada amigo que se cadastra pelo convite vale uma chance a mais no sorteio para quem indicou.'},
+  {t:'Divulgar',p:'No card do link aparecem os botões Copiar link, QR Code, Ver leads, Imprimir sorteio e Editar. O QR Code pode ser baixado para cartaz, banner ou tela no evento.',ul:['Gerar link para anúncio ou parceiro (UTMs): mostra de onde veio cada lead'],img:'mapa/leads-qrcode.jpg'},
+  {t:'O aluno se cadastra',p:'A pessoa abre o link no celular, preenche nome, WhatsApp e as perguntas, aceita o contato e confirma. Leva menos de 1 minuto.',img:'mapa/leads-captura.jpg'},
+  {t:'Código e convite',p:'Na hora aparece o código da pessoa (ex.: FERNANDA[POWER]3456) e o botão Convidar amigos pelo WhatsApp. O amigo que abre o convite vê os presentes liberados por quem indicou.',img:'mapa/leads-convite.jpg'},
+  {t:'Acompanhar os leads',p:'Na aba Leads ficam todos os cadastros, com filtros por origem, campanha, status, consultora e indicação. Clique em Abrir para mudar o status, escolher a consultora e anotar.',ul:['Ocultar: tira testes e repetidos da lista e do sorteio, sem apagar','Enviar filtrados para campanha: cria os cards no Kanban de Campanhas','Exportar planilha'],img:'mapa/leads-lista.jpg'},
+  {t:'Ranking e sorteio',p:'Em Indicações fica o ranking de quem mais trouxe amigos e quantos matricularam. Para sortear, clique em Imprimir sorteio: sai uma folha com um nome por chance, pronta para recortar, ou salve em PDF.',img:'mapa/leads-ranking.jpg'}
+ ]},
+ {id:'exp',nm:'🧪 Registrar experiência',passos:[
+  {t:'Como a experiência nasce',p:'O jeito mais comum é pelo Kanban: quando o card vai para Experiência agendada, a experiência é criada sozinha e já fica ligada ao lead. Para cadastrar direto, abra ☰ Ferramentas › Experiências e clique em + Nova Experiência.',img:'mapa/exp-kanban.jpg'},
+  {t:'Cadastro e qualificação',p:'Preencha o nome do lead, nº de cadastro, WhatsApp, data de início e consultor(a). Depois a qualificação:',ul:['Perfil: 95% (precisa de orientação), 5% (autônomo, já treina) ou sem qualificação','Programa (pilar): Emagrecimento com Saúde, Imunidade e Energia, Performance e Esporte ou Cuidados Especiais','Duração em dias e o objetivo específico do aluno'],img:'mapa/exp-nova.jpg'},
+  {t:'Dia 1: treinador responsável',p:'Abra o card e registre quem atendeu no primeiro dia. Esse campo trava depois de salvo, porque é o indicador de conversão do treinador.',img:'mapa/exp-detalhe.jpg',dica:'É depois do Dia 1 que liberam o checklist, os pontos críticos, a presença e as tarefas.'},
+  {t:'Acompanhar os dias',p:'Durante a experiência, use o card para registrar:',ul:['Pontos críticos: mapeamento de sintomas e consultoria com o treinador','Presença de cada dia e a temperatura do aluno (esquentando, estável, esfriando)','Tarefas de vendas e do time técnico, e o toque de sexta-feira']},
+  {t:'Fechar a experiência',p:'Mova para Experiência Convertida quando matricular (a data fica registrada) ou para Não Convertida, com o motivo. A aba Agenda mostra o que cada um tem para fazer, e Indicadores mostra conversão, frequência e resultado por treinador.',img:'mapa/exp-agenda.jpg'}
+ ]},
+ {id:'nps',nm:'⭐ Enviar o NPS',passos:[
+  {t:'Copiar o link',p:'No Hub, abra ☰ Ferramentas e clique em ⭐ Copiar link do NPS. Mande no WhatsApp do aluno ou deixe num QR Code na recepção.',img:'mapa/hub-ferramentas.jpg'},
+  {t:'O aluno responde',p:'Pelo celular, ele escolhe sobre o que quer avaliar (experiência geral, consultoria, avaliação física, revisão de treino ou time técnico), dá a nota de 0 a 10 e, se quiser, coloca o nome.',img:'mapa/nps-aluno.jpg'},
+  {t:'Ver o resultado',p:'As notas entram na Visão Executiva: NPS geral e NPS por experiência (consultoria, avaliação física, revisão de treino e time técnico).',img:'mapa/nps-visao.jpg',dica:'Mande logo depois da consultoria, da avaliação física e das revisões. Nota 9 ou 10 é o melhor momento para pedir uma indicação.'}
+ ]},
+ {id:'pessoas',nm:'👥 Hub de Pessoas',passos:[
+  {t:'Abrir e entrar',p:'Em ☰ Ferramentas › 👥 Hub de Pessoas. A Visão geral mostra a jornada de contratação em 7 etapas. Para ver resultados, abra Painel do gestor e entre com o e-mail e a senha de gestor(a) do Hub (consultor e treinador não veem esse painel).'},
+  {t:'Mandar o teste ao candidato',p:'No Painel do gestor, clique em Copiar link do teste e mande para o candidato. Ele coloca o nome, escolhe a vaga e aceita o uso das respostas (LGPD).',img:'mapa/pessoas-teste-inicio.jpg'},
+  {t:'O candidato responde',p:'São 12 situações do dia a dia da academia, cerca de 5 minutos. Não existe resposta certa: ele escolhe a atitude que mais parece com a dele.',img:'mapa/pessoas-teste-pergunta.jpg'},
+  {t:'Ler o relatório',p:'O candidato aparece no painel com o perfil predominante e o secundário, a consistência das respostas, os pontos fortes, o que pede acompanhamento e o encaixe em cada área (recepção, vendas, técnica).',img:'mapa/pessoas-relatorio.jpg',dica:'O resultado é apoio à decisão, nunca decide sozinho a contratação.'}
+ ]},
+ {id:'planner',nm:'🏋️ Entrar no Planner',passos:[
+  {t:'Abrir a Área do Treinador',p:'No menu lateral do Hub, em Retenção, clique em 🏋️ Área do Treinador. Cada cartão abre um módulo em uma nova aba:',ul:['Planner do Treinador, Diário do Treinador e Revisão de Treino (treinador)','Gestão da Retenção e Atualizar Carteira (gestor)','Painel de Vendas (consultor e gestor) e Mapa do Sistema'],img:'mapa/planner-area.jpg'},
+  {t:'Conectar uma vez',p:'Se aparecer "Ainda não conectado", clique em Conectar ou em qualquer módulo e entre com o mesmo e-mail e a mesma senha do Hub. É só uma vez por navegador: depois os módulos abrem direto.',img:'mapa/planner-conectar.jpg',dica:'Ao entrar no Hub, a Retenção já conecta sozinha quando o e-mail e a senha são iguais nos dois.'},
+  {t:'Entrar direto pelo celular',p:'O treinador também pode abrir só os planners pelo link da Retenção: escolhe Treinador, Gestor ou Consultor(a), coloca e-mail e senha e entra. Se esquecer a senha, usa Esqueci minha senha.',img:'mapa/planner-login.jpg'},
+  {t:'Criar os acessos dos treinadores',p:'Em Gestão da Retenção › 👥 Equipe › + Novo(a) da Equipe, o gestor cadastra o treinador com e-mail e senha. Use os mesmos do Hub para a pessoa entrar nos dois sem trocar de senha.',dica:'O primeiro acesso de gestor da academia na Retenção é criado pela equipe GeFit.'}
+ ]}
 ];
 let tarefaAtiva='lancar';
 function renderPassos(){
