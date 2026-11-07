@@ -1279,7 +1279,7 @@ async function carregarDadosAcademia(){
       : (ativacaoPct>=60 ? '<span>✅</span><span>Ativação acima da meta (60%)</span>' : '<span>⚠️</span><span>Ativação abaixo da meta (60%)</span>');
 
     document.getElementById('mRingPct').textContent = vincPct+'%';
-    document.getElementById('mRingDesc').textContent = `${vincPct}% dos alunos ativos estão no método GeFit`;
+    document.getElementById('mRingDesc').textContent = `${vincPct}% dos alunos ativos estão no método`;
     document.getElementById('mRingBar').style.width = Math.min(100,vincPct)+'%';
     const circunf = 276.5;
     document.getElementById('mRingFill').setAttribute('stroke-dashoffset', String(circunf - (circunf*Math.min(100,vincPct)/100)));
@@ -2206,7 +2206,7 @@ window.addEventListener('DOMContentLoaded', carregarDadosReais);
   <!-- Esquerdo: QG.90 -->
   <div style="display:flex;align-items:center;gap:8px">
     <img class="gf-logo" src="logo-powerfit.png" alt="Power Fit" style="height:28px">
-    <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.08em">GeFit</span>
+    <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.08em">Power Fit</span>
     <span style="font-size:10px;color:rgba(255,255,255,.12);letter-spacing:.06em">· Método de Retenção</span>
   </div>
   <!-- Direito: GeFit -->

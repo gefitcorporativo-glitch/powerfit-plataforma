@@ -1350,7 +1350,7 @@ body.role-consultor #painel-prod-time,body.role-consultor #painel-cons-filter{di
         <div style="background:linear-gradient(135deg,#1a0a00,#0a0a1a);border:1px solid var(--bdo);border-radius:10px;padding:20px;text-align:center;margin-bottom:24px">
           <div style="font-size:24px;margin-bottom:8px">📲</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--or);text-transform:uppercase;margin-bottom:6px">Precisa de ajuda?</div>
-          <div style="font-size:13px;color:var(--td)">Entre em contato com o GeFit pelo grupo do WhatsApp do Treinamento Comercial.</div>
+          <div style="font-size:13px;color:var(--td)">Entre em contato com a equipe de suporte pelo grupo do WhatsApp do Treinamento Comercial.</div>
         </div>
 
       </div>
@@ -1411,7 +1411,7 @@ body.role-consultor #painel-prod-time,body.role-consultor #painel-cons-filter{di
     <div style="text-align:center;padding:8px 0 20px">
       <div style="font-size:40px;margin-bottom:10px">🏋️</div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--or);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Bem-vindo(a) ao Desafio!</div>
-      <div style="font-size:13px;color:var(--td)">ROI 21 Dias, Plataforma GeFit</div>
+      <div style="font-size:13px;color:var(--td)">ROI 21 Dias, Plataforma Power Fit</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
       <div style="background:var(--s2);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px">
@@ -1424,7 +1424,7 @@ body.role-consultor #painel-prod-time,body.role-consultor #painel-cons-filter{di
       </div>
       <div style="background:var(--s2);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px">
         <div style="background:var(--or);color:#000;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;flex-shrink:0">3</div>
-        <div><div style="font-weight:600;font-size:14px">Acompanhe o painel e o ranking</div><div style="font-size:12px;color:var(--td);margin-top:1px">O GeFit também acompanha tudo em tempo real</div></div>
+        <div><div style="font-weight:600;font-size:14px">Acompanhe o painel e o ranking</div><div style="font-size:12px;color:var(--td);margin-top:1px">A equipe de suporte também acompanha tudo em tempo real</div></div>
       </div>
       <div style="background:var(--or-d);border:1px solid var(--bdo);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px">
         <div style="font-size:20px;flex-shrink:0">❓</div>
@@ -1646,7 +1646,7 @@ async function loadAll(){
     db.acs={};
     acs.forEach(a=>{db.acs[a.id]={...a,consultoras:{},registros:[],treinadores:{}}});
     if(!isAdmin()&&!sessao.academia_id){
-      toast('Sua conta não está vinculada a nenhuma academia. Fale com o suporte GeFit.',true);
+      toast('Sua conta não está vinculada a nenhuma academia. Fale com o suporte da plataforma.',true);
       console.error('SEGURANÇA: gestor(a) sem academia_id tentou logar, acesso bloqueado.', sessao);
     }
     // Blindagem extra: mesmo que a consulta acima de alguma forma retornasse mais de uma
@@ -3551,7 +3551,7 @@ function exportCSV(){
     });
   });
   const blob=new Blob(['\uFEFF'+hdr.join(';')+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);const l=document.createElement('a');l.href=url;l.download=`GeFit_ROI21_${a.nome.replace(/\s/g,'_')}.csv`;l.click();URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob);const l=document.createElement('a');l.href=url;l.download=`PowerFit_ROI21_${a.nome.replace(/\s/g,'_')}.csv`;l.click();URL.revokeObjectURL(url);
   toast('CSV exportado!');
 }
 
@@ -4891,7 +4891,7 @@ function renderPlaybooks(){
       {icon:'2️⃣',t:'Etapa 2, Encontro presencial (café): ouvir, conectar, preparar indicação'},
       {icon:'3️⃣',t:'Etapa 3, Transição: "E é exatamente por isso que a gente faz o que faz aqui." (PAUSA)'},
       {icon:'4️⃣',t:'Etapa 4, Execução: pede o celular, abre os contatos, define 3 a 5 pessoas'},
-      {icon:'🔢',t:'Definição do número: padrão GeFit = 3 a 5 pessoas, sem negociação'},
+      {icon:'🔢',t:'Definição do número: padrão do método = 3 a 5 pessoas, sem negociação'},
       {icon:'⏰',t:'Regra crítica: fazer na hora, "Enquanto a gente está aqui, você já pode me passar esses contatos."'}
     ],'var(--pu)')}
     ${playSection('Quebra de Objeção do Aluno','',[

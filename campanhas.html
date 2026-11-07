@@ -664,7 +664,7 @@ async function doLogin(){
     }
     // admin (master GeFit) sempre tem acesso; demais precisam ter 'campanhas' liberado
     if(res[0].role!=='admin' && !(res[0].modulos_ativos||[]).includes('campanhas')){
-      err.textContent='Este módulo ainda não foi liberado para sua academia. Fale com o GeFit.';err.classList.add('show');
+      err.textContent='Este módulo ainda não foi liberado para sua academia. Fale com o suporte da plataforma.';err.classList.add('show');
       btn.disabled=false;btn.textContent='Entrar';return;
     }
     sessionStorage.setItem('qg90_sessao',JSON.stringify(res[0]));
@@ -723,7 +723,7 @@ async function iniciarApp(s){
   try{aplicarRotulosGefit()}catch(e){console.warn(e)}
   sessionStorage.setItem('qg90_sessao',JSON.stringify(s));
   document.getElementById('userNome').textContent=s.nome||s.email;
-  document.getElementById('userAcademia').textContent=s.role==='admin'?'GeFit · Master':(s.role==='consultor'?'Consultor(a)':(s.role==='treinador'?'Treinador(a)':'Gestor(a)'));
+  document.getElementById('userAcademia').textContent=s.role==='admin'?'Admin · Master':(s.role==='consultor'?'Consultor(a)':(s.role==='treinador'?'Treinador(a)':'Gestor(a)'));
   mostrarTela('appWrap');
   try{
     consultoras=s.academia_id?await sbGet('powerfit_consultoras',`academia_id=eq.${s.academia_id}&select=id,nome,meta,meta_tipo,metas`):[];

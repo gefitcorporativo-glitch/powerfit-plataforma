@@ -296,7 +296,7 @@ document.addEventListener('click',e=>{
 
 /* ───────── 02 · Começar ───────── */
 const CHECK=[
- ['Entrar no Hub com o login de gestor','Use o e-mail e a senha que a equipe GeFit enviou. Troque a senha depois do primeiro acesso.'],
+ ['Entrar no Hub com o login de gestor','Use o e-mail e a senha que a equipe de suporte enviou. Troque a senha depois do primeiro acesso.'],
  ['Preencher o Briefing do negócio','Estratégia › Briefing: modalidades, público, ticket e diferenciais. É o que deixa os scripts com a cara da academia.'],
  ['Cadastrar os(as) consultores(as)','Equipe › + Consultor(a): nome, tipo de meta, carga horária e funis de trabalho.'],
  ['Cadastrar os(as) treinadores(as)','Equipe › + Treinador(a): nome, telefone, formação, CREF e nível de carreira.'],
@@ -305,7 +305,7 @@ const CHECK=[
  ['Criar a primeira campanha','Campanhas › + Nova Campanha: suba a lista de leads e divida entre os(as) consultores(as).'],
  ['Criar um link de captação','Central de Leads › Links de captação: ligue a indicação digital e o sorteio, se for usar.'],
  ['Combinar a rotina do Lançar Dia','Todo dia, no fim do expediente, cada consultor(a) lança os números. Mesmo quando é zero.'],
- ['Liberar a Área do Treinador','Os acessos do Planner são criados pela equipe GeFit com o mesmo e-mail e senha do Hub.']
+ ['Liberar a Área do Treinador','Os acessos do Planner são criados pela equipe de suporte com o mesmo e-mail e senha do Hub.']
 ];
 const LS='mapa-hub-checklist:'+CFG.nome;
 let feitos=new Set();try{feitos=new Set(JSON.parse(localStorage.getItem(LS)||'[]'))}catch(e){}
@@ -383,7 +383,7 @@ const TAREFAS=[
   {t:'Abrir a Área do Treinador',p:'No menu lateral do Hub, em Retenção, clique em 🏋️ Área do Treinador. Cada cartão abre um módulo em uma nova aba:',ul:['Planner do Treinador, Diário do Treinador e Revisão de Treino (treinador)','Gestão da Retenção e Atualizar Carteira (gestor)','Painel de Vendas (consultor e gestor) e Mapa do Sistema'],img:'mapa/planner-area.jpg'},
   {t:'Conectar uma vez',p:'Se aparecer "Ainda não conectado", clique em Conectar ou em qualquer módulo e entre com o mesmo e-mail e a mesma senha do Hub. É só uma vez por navegador: depois os módulos abrem direto.',img:'mapa/planner-conectar.jpg',dica:'Ao entrar no Hub, a Retenção já conecta sozinha quando o e-mail e a senha são iguais nos dois.'},
   {t:'Entrar direto pelo celular',p:'O treinador também pode abrir só os planners pelo link da Retenção: escolhe Treinador, Gestor ou Consultor(a), coloca e-mail e senha e entra. Se esquecer a senha, usa Esqueci minha senha.',img:'mapa/planner-login.jpg'},
-  {t:'Criar os acessos dos treinadores',p:'Em Gestão da Retenção › 👥 Equipe › + Novo(a) da Equipe, o gestor cadastra o treinador com e-mail e senha. Use os mesmos do Hub para a pessoa entrar nos dois sem trocar de senha.',dica:'O primeiro acesso de gestor da academia na Retenção é criado pela equipe GeFit.'}
+  {t:'Criar os acessos dos treinadores',p:'Em Gestão da Retenção › 👥 Equipe › + Novo(a) da Equipe, o gestor cadastra o treinador com e-mail e senha. Use os mesmos do Hub para a pessoa entrar nos dois sem trocar de senha.',dica:'O primeiro acesso de gestor da academia na Retenção é criado pela equipe de suporte.'}
  ]}
 ];
 let tarefaAtiva='lancar';
@@ -398,8 +398,8 @@ document.getElementById('tarefas').addEventListener('click',e=>{const b=e.target
 
 /* ───────── 05 · Dúvidas ───────── */
 const FAQ=[
- ['Esqueci a senha. E agora?','O gestor(a) troca a senha de qualquer pessoa da equipe em Equipe › 🔑 Acesso. A senha do gestor(a) é trocada pela equipe GeFit.'],
- ['A Área do Treinador pede login de novo','Os planners usam o mesmo e-mail e a mesma senha do Hub. Se continuar pedindo, o acesso dessa pessoa ainda não foi criado na Retenção: fale com a equipe GeFit.'],
+ ['Esqueci a senha. E agora?','O gestor(a) troca a senha de qualquer pessoa da equipe em Equipe › 🔑 Acesso. A senha do gestor(a) é trocada pela equipe de suporte.'],
+ ['A Área do Treinador pede login de novo','Os planners usam o mesmo e-mail e a mesma senha do Hub. Se continuar pedindo, o acesso dessa pessoa ainda não foi criado na Retenção: fale com a equipe de suporte.'],
  ['Não aparece Campanhas (ou outro módulo) para mim','O módulo não foi liberado no seu acesso. O gestor(a) libera em Equipe › 🔑 Acesso, marcando os módulos.'],
  ['Lancei o dia errado','Abra Relatório, encontre o lançamento e clique no ✏️ para corrigir (ou 🗑 para apagar e lançar de novo).'],
  ['Posso lançar um dia que já passou?','Sim. No Lançar Dia, informe o número do dia do desafio e a data correta.'],

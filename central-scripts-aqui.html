@@ -756,7 +756,7 @@ footer.pagefoot{text-align:center;color:var(--texto2);font-size:12.5px;padding:3
         </div>
 
         <div class="gcard">
-          <h4>Indicadores GeFit ligados a este tema</h4>
+          <h4>Indicadores do método ligados a este tema</h4>
           <div class="stat-grid">
             <div class="stat-box"><div class="stat-num">30-50</div><div class="stat-label">Tentativas/dia 🟢</div></div>
             <div class="stat-box"><div class="stat-num">20-30</div><div class="stat-label">Contatos/dia 🟢</div></div>
@@ -1517,7 +1517,7 @@ function doLogout(){
 
 function aplicarSessao(s){
   document.getElementById('userNome').textContent=s.nome||s.email;
-  document.getElementById('userAcademia').textContent=s.role==='admin'?'GeFit · Master':(s.role==='consultor'?'Consultor(a)':'Gestor(a)');
+  document.getElementById('userAcademia').textContent=s.role==='admin'?'Admin · Master':(s.role==='consultor'?'Consultor(a)':'Gestor(a)');
 }
 
 // Ao carregar: PRIORIDADE 1, entrada automática vinda do Desafio ROI 21 Dias
