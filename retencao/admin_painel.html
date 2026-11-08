@@ -735,7 +735,7 @@ let filtroAlunoStatusAtual = 'todos';
 
 // ── LOGIN ─────────────────────────────────────────────────────
 function getSb(){
-  if(!sb) sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  if(!sb) sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, window.gfOpcoesAuth);
   return sb;
 }
 

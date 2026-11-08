@@ -210,7 +210,7 @@ if(window.top!==window.self){window.top.location.href=window.location.href;}
 // ── CONFIGURAÇÃO SUPABASE ────────────────────────────────────
 const SUPABASE_URL  = APP_CONFIG.SUPABASE_URL;
 const SUPABASE_ANON = APP_CONFIG.SUPABASE_ANON;
-const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, window.gfOpcoesAuth);
 
 // ── STATE ────────────────────────────────────────────────────
 let selectedRole = 'treinador';
