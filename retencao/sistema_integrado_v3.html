@@ -1715,7 +1715,8 @@ function updateNav(){
   const prev=document.getElementById('btnPrev');
   const next=document.getElementById('btnNext');
   prev.disabled=false;
-  prev.textContent=pState.step===0?(currentAcademiaId?'← Voltar ao início':'← Voltar ao Hub'):'← Anterior';
+  let temInicio=false; try{ temInicio=!!currentAcademiaId; }catch(e){}
+  prev.textContent=pState.step===0?(temInicio?'← Voltar ao início':'← Voltar ao Hub'):'← Anterior';
   document.getElementById('navStepName').textContent=STEPS_NAMES[pState.step];
   document.getElementById('navStepNum').textContent=`${pState.step+1} de ${STEPS_NAMES.length}`;
   const can=canAdvance(); const isLast=pState.step===STEPS_NAMES.length-1;
@@ -2959,7 +2960,8 @@ function mostrarBannerModoAdmin(){
 
 // ── VOLTAR AO INÍCIO (etapa 1 do planner) ─────────────────────
 function voltarInicio(){
-  if(currentAcademiaId){ mostrarHome(); window.scrollTo({top:0}); return; }
+  let temInicio=false; try{ temInicio=!!currentAcademiaId; }catch(e){}
+  if(temInicio){ mostrarHome(); window.scrollTo({top:0}); return; }
   window.location.href = '../index.html';
 }
 
@@ -3005,7 +3007,7 @@ let modoAdmin = false;
 async function initComSupabase(){
   try {
     // Inicializar cliente Supabase
-    sbSys = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    sbSys = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, window.gfOpcoesAuth);
 
     // ── MODO ADMIN: acesso direto vindo do painel admin, sem login ──
     const urlParams = new URLSearchParams(window.location.search);
@@ -3179,6 +3181,7 @@ async function carregarAcademia(academiaId){
 
     if(acad){
       const nomeEl = document.querySelector('.p-logo-sub');
+      if(!modoAdmin && !(await gfConfereAcademia(sbSys, acad.nome))) return;
       if(nomeEl && acad.nome) nomeEl.textContent = acad.nome;
       pState.academiaNome = acad.nome || '';
 
