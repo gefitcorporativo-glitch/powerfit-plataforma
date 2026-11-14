@@ -45,6 +45,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="retencao/config.js"></script>
 <script src="diario-retencao.js"></script>
+<script src="tour.js"></script>
 </head>
 <body>
 <header><a href="index.html">← Voltar</a><div class="logo">Power Fit</div><div style="font-size:13px;color:var(--tm)">Lançamentos da equipe técnica</div></header>
@@ -56,7 +57,7 @@ async function sbGet(t,p=''){const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{
 const uid=new URLSearchParams(location.search).get('uid');
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const hoje=new Date();
-const ST={ano:hoje.getFullYear(),mes:hoje.getMonth()+1,per:hoje.getDate()<=15?'q1':'q2',viewer:null,acadRet:null,equipe:[],rows:[],hubTr:[]};
+const ST={ano:hoje.getFullYear(),mes:hoje.getMonth()+1,per:hoje.getDate()<=15?'q1':'q2',viewer:null,acadRet:null,equipe:[],rows:[],hubTr:[],func:null,cal:[]};
 function esc(t){return String(t??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
 function norm(t){return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim()}
 
@@ -94,22 +95,24 @@ async function conectar(){
 async function carregar(){
   const Q=DR.quinzenas(ST.ano,ST.mes);
   try{ST.rows=await DR.diario(ST.acadRet,Q.mes[0],Q.mes[1])}catch(e){console.error(e);ST.rows=[]}
+  [ST.func,ST.cal]=await Promise.all([DR.funcionamento(ST.viewer.academia_id),DR.calendario(ST.viewer.academia_id,Q.mes[0],Q.mes[1])]);
   render();
 }
 function render(){
-  const Q=DR.quinzenas(ST.ano,ST.mes),per=Q[ST.per],uteis=DR.diasUteis(...per).length;
+  const Q=DR.quinzenas(ST.ano,ST.mes),per=Q[ST.per];
+  const diasTxt=t=>{const esp=DR.diasEsperados(...per,ST.func,ST.cal,t.email),rp=ST.rows.filter(r=>r.treinador_id===t.id&&r.data>=per[0]&&r.data<=per[1]),le=rp.filter(r=>esp.includes(r.data)).length,ex=rp.length-le;return{falta:le<esp.length,txt:`${le} de ${esp.length}${ex?` <span style="color:var(--td);font-size:11px">+${ex}</span>`:''}`}};
   const rows=ST.rows.filter(r=>r.data>=per[0]&&r.data<=per[1]);
   const linhas=ST.equipe.map(t=>({t,s:DR.soma(rows.filter(r=>r.treinador_id===t.id))}));
   const tot=DR.soma(rows);
   const anos=[ST.ano-1,ST.ano,ST.ano+1];
-  const cel=(s,dias)=>{
+  const cel=(s,dd)=>{
     const rp=s.rev_pct==null?'·':s.rev_pct+'%',cs=s.rev_pct==null?'':(s.rev_pct>=90?'g':s.rev_pct>=70?'a':'r');
     const pl=s.inseridos_carteira<s.novos_alunos?'a':'';
     return`<td>${s.experiencias_iniciadas}</td><td>${s.novos_alunos}</td><td class="${pl}">${s.inseridos_carteira}</td>
       <td>${s.consultorias_leads}</td><td>${s.consultorias_alunos}</td><td><b>${s.consultorias_total}</b></td><td>${s.avaliacoes_realizadas}</td>
       <td>${s.revisoes_previstas}</td><td>${s.revisoes_realizadas}</td><td class="${cs}">${rp}</td>
       <td class="${s.rev_saldo<0?'r':'g'}">${s.rev_saldo>0?'+':''}${s.rev_saldo}</td>
-      <td class="${dias!=null&&s.dias<dias?'a':''}">${s.dias}${dias!=null?' de '+dias:''}</td><td class="${s.pedidos?'a':''}">${s.pedidos?'⚠ '+s.pedidos:'·'}</td>`};
+      <td class="${dd&&dd.falta?'a':''}">${dd?dd.txt:s.dias}</td><td class="${s.pedidos?'a':''}">${s.pedidos?'⚠ '+s.pedidos:'·'}</td>`};
   document.getElementById('app').innerHTML=`<div class="card">
     <div class="hd"><h2>Lançamentos da equipe técnica</h2>
       <select class="fi" onchange="ST.mes=+this.value;carregar()">${MESES.map((m,i)=>`<option value="${i+1}" ${i+1===ST.mes?'selected':''}>${m}</option>`).join('')}</select>
@@ -119,12 +122,18 @@ function render(){
     <div class="sub">O que cada treinador lançou no Lançamento do dia (computador da academia). Clique no nome para abrir o perfil com as quinzenas e liberar correções. Só a gestão vê esta tela.</div>
     <div class="wrap"><table>
       <thead><tr><th>Treinador(a)</th><th>Exp.<br>iniciadas</th><th>Alunos<br>novos</th><th>Planners<br>iniciados</th><th>Consult.<br>leads</th><th>Consult.<br>alunos</th><th>Consult.<br>total</th><th>Avaliações</th><th>Revisões<br>agendadas</th><th>Revisões<br>realizadas</th><th>Revisões<br>%</th><th>Saldo<br>revisões</th><th>Dias<br>lançados</th><th>Pedidos de<br>correção</th></tr></thead>
-      <tbody>${linhas.length?linhas.map(({t,s})=>`<tr><td>${t.hubId?`<a href="perfil-treinador.html?uid=${encodeURIComponent(uid)}&id=${encodeURIComponent(t.hubId)}">${esc(t.nome)} ›</a>`:esc(t.nome)}</td>${cel(s,uteis)}</tr>`).join(''):'<tr><td colspan="14" style="color:var(--td)">Nenhum treinador cadastrado na Área do Treinador.</td></tr>'}
+      <tbody>${linhas.length?linhas.map(({t,s})=>`<tr><td>${t.hubId?`<a href="perfil-treinador.html?uid=${encodeURIComponent(uid)}&id=${encodeURIComponent(t.hubId)}">${esc(t.nome)} ›</a>`:esc(t.nome)}</td>${cel(s,diasTxt(t))}</tr>`).join(''):'<tr><td colspan="14" style="color:var(--td)">Nenhum treinador cadastrado na Área do Treinador.</td></tr>'}
       ${linhas.length?`<tr class="tot"><td>Equipe</td>${cel(tot,null)}</tr>`:''}</tbody>
     </table></div>
-    <div class="leg">Dias lançados: de segunda a sábado, até hoje (${uteis} no período). Em amarelo: planners abaixo dos alunos novos, dias sem lançamento ou pedidos de correção. Revisões: verde a partir de 90%, amarelo de 70% a 89%, vermelho abaixo de 70%.</div>
+    <div class="leg" style="padding-bottom:40px">Dias lançados: dias em que a academia abre (<b>${DR.resumoFunc(ST.func)}</b>), até hoje, sem feriados e sem as folgas de cada um. "+N" = lançamentos extras. ${ST.cal.filter(c=>c.tipo==='feriado'&&c.data>=per[0]&&c.data<=per[1]).length?'Feriados no período: '+ST.cal.filter(c=>c.tipo==='feriado'&&c.data>=per[0]&&c.data<=per[1]).map(c=>c.data.slice(8)+'/'+c.data.slice(5,7)).join(', ')+'.':''} Em amarelo: planners abaixo dos alunos novos, dias sem lançamento ou pedidos de correção. Revisões: verde a partir de 90%, amarelo de 70% a 89%, vermelho abaixo de 70%.</div>
   </div>`;
+  if(window.GFTour){GFTour.botao(TOUR_EQ);GFTour.primeiraVez(TOUR_EQ)}
 }
+const TOUR_EQ={id:'diario-equipe',passos:[
+  {el:'.hd',t:'Mês e quinzena',x:'Escolha o período.'},
+  {el:'.wrap',t:'Tabela',x:'Cada linha é um treinador. Amarelo é ponto de atenção.'},
+  {el:()=>[...document.querySelectorAll('th')].find(th=>th.textContent.includes('Saldo')),t:'Revisões e saldo',x:'Saldo negativo = revisões perdidas. Vale abordar na 1:1.'},
+  {el:'td a',t:'Nome do treinador',x:'Clique para abrir o perfil completo.'}]};
 init();
 </script>
 </body>

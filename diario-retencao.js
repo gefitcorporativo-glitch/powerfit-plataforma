@@ -67,12 +67,31 @@
     const q=DR.quinzenas(ano,mes),f=([a,b])=>rows.filter(r=>r.data>=a&&r.data<=b);
     return{q1:DR.soma(f(q.q1)),q2:DR.soma(f(q.q2)),mes:DR.soma(f(q.mes))};
   };
-  // dias úteis (segunda a sábado) de um intervalo, até hoje
-  DR.diasUteis=function(inicio,fim){
-    const out=[],h=new Date();h.setHours(12,0,0,0);
-    for(let d=new Date(inicio+'T12:00:00');d<=new Date(fim+'T12:00:00')&&d<=h;d.setDate(d.getDate()+1)){if(d.getDay()!==0)out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))}
-    return out;
+  // ---- calendário: funcionamento da academia, feriados e folgas (banco do Hub) ----
+  DR.DIAS=['dom','seg','ter','qua','qui','sex','sab'];
+  DR.DIAS_L={dom:'Domingo',seg:'Segunda',ter:'Terça',qua:'Quarta',qui:'Quinta',sex:'Sexta',sab:'Sábado'};
+  DR.FUNC_PADRAO={dom:{abre:false,ini:'',fim:''},seg:{abre:true,ini:'06:00',fim:'22:00'},ter:{abre:true,ini:'06:00',fim:'22:00'},qua:{abre:true,ini:'06:00',fim:'22:00'},qui:{abre:true,ini:'06:00',fim:'22:00'},sex:{abre:true,ini:'06:00',fim:'22:00'},sab:{abre:true,ini:'08:00',fim:'12:00'}};
+  DR.iso=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+  DR.hoje=function(){return DR.iso(new Date())};
+  DR.diasDoPeriodo=function(inicio,fim,ateHoje){const out=[],h=DR.hoje();for(let d=new Date(inicio+'T12:00:00');DR.iso(d)<=fim;d.setDate(d.getDate()+1)){const x=DR.iso(d);if(ateHoje&&x>h)break;out.push(x)}return out};
+  async function hubReq(path,opt){const h=DR.hub();const r=await fetch(`${h.url}/rest/v1/${h.px}${path}`,Object.assign({},opt,{headers:Object.assign({apikey:h.key,Authorization:'Bearer '+h.key,'Content-Type':'application/json'},(opt&&opt.headers)||{})}));if(!r.ok)throw new Error(await r.text());const t=await r.text();return t?JSON.parse(t):null}
+  DR.funcionamento=async function(hubAcad){
+    try{const r=await hubReq(`academias?id=eq.${encodeURIComponent(hubAcad)}&select=funcionamento`);const f=r&&r[0]&&r[0].funcionamento;return Object.assign({},DR.FUNC_PADRAO,f||{})}catch(e){return Object.assign({},DR.FUNC_PADRAO)}
   };
+  DR.calendario=async function(hubAcad,inicio,fim){
+    try{return await hubReq(`diario_calendario?academia_id=eq.${encodeURIComponent(hubAcad)}&data=gte.${inicio}&data=lte.${fim}&select=*`)||[]}catch(e){return[]}
+  };
+  DR.marcarDia=async function(o){return hubReq('diario_calendario',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(o)})};
+  DR.desmarcarDia=async function(id){return hubReq(`diario_calendario?id=eq.${id}`,{method:'DELETE'})};
+  // status de um dia para um treinador: trabalho | fechado | feriado | folga
+  DR.statusDia=function(d,func,cal,email){
+    const fer=cal.find(c=>c.data===d&&c.tipo==='feriado');if(fer)return{st:'feriado',reg:fer};
+    const fol=email&&cal.find(c=>c.data===d&&c.tipo==='folga'&&String(c.treinador_email||'').toLowerCase()===String(email).toLowerCase());if(fol)return{st:'folga',reg:fol};
+    const dia=DR.DIAS[new Date(d+'T12:00:00').getDay()];
+    return{st:func[dia]&&func[dia].abre?'trabalho':'fechado'};
+  };
+  DR.diasEsperados=function(inicio,fim,func,cal,email){return DR.diasDoPeriodo(inicio,fim,true).filter(d=>DR.statusDia(d,func,cal,email).st==='trabalho')};
+  DR.resumoFunc=function(func){const ab=DR.DIAS.filter(d=>func[d]&&func[d].abre);if(ab.length===7)return'todos os dias';if(ab.join()==='seg,ter,qua,qui,sex,sab')return'segunda a sábado';if(ab.join()==='seg,ter,qua,qui,sex')return'segunda a sexta';return ab.map(d=>DR.DIAS_L[d].slice(0,3).toLowerCase()).join(', ')};
   // ---- liberações de correção (banco do Hub) ----
   DR.hub=function(){return{url:APP_CONFIG.HUB_URL,key:APP_CONFIG.HUB_ANON,px:APP_CONFIG.HUB_PREFIXO}};
   DR.liberacoes=async function(email){

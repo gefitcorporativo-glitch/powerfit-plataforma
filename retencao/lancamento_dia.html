@@ -90,7 +90,7 @@ button{font-family:inherit;cursor:pointer}
 textarea.fi{min-height:84px;resize:vertical;font-size:15px}
 .chk{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:14px;color:var(--tm);cursor:pointer}
 .chk input{width:20px;height:20px;accent-color:var(--or);margin-top:1px}
-.bar{margin-top:26px;padding:6px 0 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.bar{margin-top:26px;padding:6px 0 60px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .bar .btn-or{flex:1;max-width:420px;font-size:20px;padding:18px}
 .bar .tempo{margin-left:auto;font-size:12.5px;color:var(--td)}
 .banner{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;border:1px solid var(--orb);background:var(--ord);margin-top:14px;font-size:14.5px;flex-wrap:wrap}
@@ -150,6 +150,8 @@ textarea.fi{min-height:84px;resize:vertical;font-size:15px}
 </div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../diario-retencao.js"></script>
+<script src="../tour.js"></script>
 <script>
 /* Lançamento do dia: feito para o computador da academia, usado por vários treinadores.
    Cada um entra com a própria senha, lança só o dia de hoje e a tela volta sozinha para a lista de nomes.
@@ -179,6 +181,19 @@ const REV=[
   {k:'revisoes_realizadas',ic:'✅',n:'Revisões realizadas',d:'feitas de verdade hoje',aj:'Quantas revisões de treino você <b>realmente fez</b> hoje. Se o aluno faltou, não conta.'}
 ];
 const TODOS=[...CAMPOS.flatMap(s=>s.itens),...REV];
+const TOUR_NOMES={id:'lanc-nomes',passos:[
+  {el:'.nomes',t:'Quem vai lançar o dia?',x:'Clique no seu nome. Cada um lança o seu.'},
+  {el:'.nomes',t:'Senha',x:'Depois de clicar no nome, digite a sua senha: a mesma do Hub e da Área do Treinador. Esqueceu? Procure seu líder.'},
+  {el:'.hello .help',t:'❓ Ajuda',x:'Dúvida sobre um indicador? Clique aqui.'}]};
+const TOUR_LANC={id:'lanc',passos:[
+  {el:'.lhead .chip.or',t:'Data de hoje',x:'Você lança só o dia de hoje, no fim do turno.'},
+  {el:'#c-experiencias_iniciadas .step',t:'Botões − / +',x:'Toque para somar ou tirar. Também dá para digitar o número.'},
+  {el:()=>document.querySelectorAll('.sec')[0],t:'Novos inícios',x:'Experiências no 1º dia, alunos novos e planners. Todo aluno novo precisa de um planner.'},
+  {el:()=>document.querySelectorAll('.sec')[1],t:'Atendimentos',x:'Consultorias com leads (Experiência), com alunos, e avaliações.'},
+  {el:()=>document.querySelectorAll('.sec')[2],t:'Revisões de treino',x:'Agendadas para hoje × realizadas. Sem revisão hoje? Deixe 0 de 0.'},
+  {el:()=>document.querySelectorAll('.sec')[3],t:'Observação e correção',x:'Errou outro dia? Marque e explique. O seu líder libera.'},
+  {el:'#btn-salvar',t:'Salvar o dia',x:'Ao salvar, a tela volta para os nomes. Se ficar parada 2 minutos, sai sozinha.'},
+  {el:'.lhead .help',t:'❓ Ajuda',x:'Dúvida sobre um indicador? Clique aqui. Ficou com dúvida mesmo assim? Procure seu líder.'}]};
 
 let equipe=null,pessoa=null,treinador=null,dataLanc=hoje(),registro=null,vals={},liberacao=null,timer=null,saindo=false;
 function hoje(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -212,6 +227,7 @@ function telaInicial(){
     <div class="nomes">${equipe.pessoas.map((p,i)=>`<button class="nome" onclick="escolher(${i})"><span class="av">${esc((p.nome||'?').trim()[0]||'?').toUpperCase()}</span><div><b>${esc(p.nome)}</b></div></button>`).join('')}</div>
     <div class="rod"><span>Equipe de ${esc(equipe.academia||'')} · atualizada em ${esc(equipe.em||'')}</span><button class="link" onclick="pedirGestor()">Atualizar equipe (gestor)</button></div>
     <div class="sig">Metodologia <img src="logo-gefit.png" alt="GeFit" style="height:12px" onerror="this.outerHTML='GeFit'"></div>`;
+  if(window.GFTour)GFTour.botao(TOUR_NOMES);
 }
 function pedirGestor(){
   pessoa={gestor:true};
@@ -265,6 +281,8 @@ async function entrarTreinador(user){
   dataLanc=hoje();liberacao=null;
   await carregarDia();
   try{const l=await hubGet('diario_liberacoes',`treinador_email=eq.${encodeURIComponent(pessoa.email)}&usado=eq.false&select=id,data&order=data.asc`);window._libs=l||[]}catch(e){window._libs=[]}
+  window._stHoje='trabalho';
+  try{if(window.DR&&CFG.HUB_ACADEMIA_ID){const h=hoje();const [fn,cal]=await Promise.all([DR.funcionamento(CFG.HUB_ACADEMIA_ID),DR.calendario(CFG.HUB_ACADEMIA_ID,h,h)]);window._stHoje=DR.statusDia(h,fn,cal,pessoa.email).st}}catch(e){}
   renderLanc();vigiar();
 }
 async function carregarDia(){
@@ -282,6 +300,7 @@ function renderLanc(){
       ${ehHoje?`<span class="chip or">📅 Lançamento de hoje · ${longo(dataLanc)}</span>`:`<span class="chip or">✏️ Correção liberada · ${longo(dataLanc)}</span>`}
       ${registro?`<span class="chip ok">✓ ${ehHoje?'Você já lançou hoje. Pode ajustar e salvar de novo.':'Lançamento existente'}</span>`:''}
       <button class="btn btn-gh btn-sm help" onclick="abrir('m-ajuda')">❓ Ajuda com os indicadores</button></div>
+    ${ehHoje&&window._stHoje&&window._stHoje!=='trabalho'?`<div class="banner" style="border-color:var(--bd2);background:var(--c2)"><span>${{folga:'🏖 Hoje está marcado como a sua <b>folga</b>.',feriado:'🎌 Hoje está marcado como <b>feriado</b>.',fechado:'Hoje a academia normalmente <b>não abre</b>.'}[window._stHoje]} Se você trabalhou, pode lançar normalmente: conta como lançamento extra.</span></div>`:''}
     ${libs.map(l=>`<div class="banner"><span>✏️ O seu líder liberou a correção do dia <b>${fmtD(l.data)}</b>.</span><button class="btn btn-or btn-sm" onclick="corrigir('${l.id}','${l.data}')">Corrigir ${fmtD(l.data)}</button></div>`).join('')}
     ${CAMPOS.map(s=>`<div class="sec"><h3>${s.sec} <small>${s.sub}</small></h3><div class="grid">${s.itens.map(cartao).join('')}</div>
       ${s.itens.some(i=>i.k==='inseridos_carteira')?'<div class="aviso" id="av-plan">⚠️ Planners iniciados precisa ser no mínimo igual a alunos novos.</div>':''}</div>`).join('')}
@@ -293,6 +312,7 @@ function renderLanc(){
     <div class="bar"><button class="btn btn-or" id="btn-salvar" onclick="salvar(false)">${ehHoje?'Salvar o dia':'Salvar correção'}</button>
       <button class="btn btn-gh" onclick="telaInicial()">Sair sem salvar</button><span class="tempo">Sai sozinho após 2 min sem uso</span></div>`;
   atualizarCalc();
+  if(window.GFTour){GFTour.botao(TOUR_LANC);if(pessoa&&pessoa.email)GFTour.primeiraVez(TOUR_LANC,'lanc-'+pessoa.email)}
 }
 function cartao(i){return`<div class="ind" id="c-${i.k}"><div><div class="nm"><span class="ic">${i.ic}</span><span>${i.n}<div class="ds">${i.d}</div></span></div></div>
   <div class="step"><button onclick="mudar('${i.k}',-1)" aria-label="menos">−</button><input type="number" min="0" inputmode="numeric" id="v-${i.k}" value="${vals[i.k]}" oninput="digitar('${i.k}',this.value)"><button class="mais" onclick="mudar('${i.k}',1)" aria-label="mais">+</button></div></div>`}
@@ -337,7 +357,7 @@ function sucesso(){
   setTimeout(()=>{if(!treinador)telaInicial()},4000);
 }
 function sair(redesenhar){
-  clearTimeout(timer);
+  clearTimeout(timer);if(window.GFTour)GFTour.fechar();
   if(treinador||pessoa){try{sb.auth.signOut()}catch(e){}}
   treinador=null;pessoa=null;registro=null;liberacao=null;window._libs=[];
 }

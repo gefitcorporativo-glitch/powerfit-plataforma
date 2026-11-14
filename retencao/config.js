@@ -14,7 +14,8 @@ window.APP_CONFIG = {
   // Banco do Hub (chave pública): o lançamento do dia lê as correções liberadas pelo gestor
   HUB_URL:      'https://irwvagffrguiljaxrzmd.supabase.co',
   HUB_ANON:     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlyd3ZhZ2Zmcmd1aWxqYXhyem1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNDk5ODUsImV4cCI6MjEwNDkyNTk4NX0.YAApyaH6iIHEua_89fgCUpMzgXRIcWb_vNRkBQAoq5A',
-  HUB_PREFIXO:  'powerfit_'
+  HUB_PREFIXO:  'powerfit_',
+  HUB_ACADEMIA_ID: '693a66c2-c983-499d-a611-a3225e91ea8f'
 };
 window.gfOpcoesAuth = { auth: { storageKey: window.APP_CONFIG.STORAGE_KEY } };
 // Trava: se o login for de outra academia, sai e avisa (nunca mostra dados de outra academia com esta marca)

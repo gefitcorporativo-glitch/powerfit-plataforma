@@ -62,3 +62,24 @@ alter table powerfit_diario_liberacoes disable row level security;
 
 -- Atualiza o cache do Supabase para enxergar as colunas novas na hora
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- Calendário de lançamentos (14/11/2026, parte 2)
+-- Funcionamento da academia (dias e horários) + feriados e folgas
+-- ============================================================
+alter table powerfit_academias add column if not exists funcionamento jsonb;
+
+create table if not exists powerfit_diario_calendario (
+  id uuid primary key default gen_random_uuid(),
+  academia_id text not null,
+  data text not null,
+  tipo text not null,            -- 'feriado' (academia toda) ou 'folga' (um treinador)
+  treinador_email text,          -- vazio quando é feriado
+  treinador_nome text,
+  marcado_por text,
+  created_at timestamptz not null default now()
+);
+create index if not exists powerfit_diario_calendario_idx on powerfit_diario_calendario (academia_id, data);
+alter table powerfit_diario_calendario disable row level security;
+
+notify pgrst, 'reload schema';
