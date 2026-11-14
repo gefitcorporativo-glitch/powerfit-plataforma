@@ -819,7 +819,10 @@ body.role-consultor #painel-prod-time,body.role-consultor #painel-cons-filter{di
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin:28px 0 14px;padding-top:20px;border-top:1px solid var(--bd)">
         <div class="lbl" style="margin:0">Treinadores(as)</div>
-        <button class="btn-gh btn-sm" onclick="abrirNovoTreinadorROI()">+ Treinador(a)</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-gh btn-sm" onclick="window.location.href='diario-equipe.html?uid='+encodeURIComponent(sessao.id)" title="O que cada treinador lançou no Lançamento do dia, por quinzena">📊 Lançamentos da equipe</button>
+          <button class="btn-gh btn-sm" onclick="abrirNovoTreinadorROI()">+ Treinador(a)</button>
+        </div>
       </div>
       <div class="cons-grid" id="treinadores-grid"></div>
     </div>
@@ -1061,10 +1064,10 @@ body.role-consultor #painel-prod-time,body.role-consultor #painel-cons-filter{di
   <!-- MODAL ACESSO À RETENÇÃO -->
   <div class="modal-ov" id="m-ret">
     <div class="modal" style="max-width:420px">
-      <div class="modal-hd"><h3>Acesso à Retenção</h3><button class="btn-x" onclick="closeM('m-ret')">×</button></div>
-      <div style="font-size:13px;color:var(--tm);margin-bottom:14px;line-height:1.5">Entre com o e-mail e a senha do sistema de Retenção. É só uma vez: depois os módulos abrem direto neste navegador.</div>
+      <div class="modal-hd"><h3>Conectar a Área do Treinador</h3><button class="btn-x" onclick="closeM('m-ret')">×</button></div>
+      <div style="font-size:13px;color:var(--tm);margin-bottom:14px;line-height:1.5"><b style="color:var(--tx)">Use o mesmo e-mail e a mesma senha do Hub.</b> É só uma vez neste navegador: depois os módulos da Área do Treinador abrem direto.</div>
       <div class="fg" style="margin-bottom:10px"><label class="fl">E-mail</label><input class="fi" type="email" id="ret-email" autocomplete="username"></div>
-      <div class="fg" style="margin-bottom:6px"><label class="fl">Senha da Retenção</label><input class="fi" type="password" id="ret-senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')atConfirmarSenha()"></div>
+      <div class="fg" style="margin-bottom:6px"><label class="fl">Senha (a mesma do Hub)</label><input class="fi" type="password" id="ret-senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')atConfirmarSenha()"></div>
       <div class="auth-err" id="ret-err" style="margin-top:10px"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
         <button class="btn-gh" onclick="closeM('m-ret')">Cancelar</button>
@@ -5193,7 +5196,7 @@ async function excluirTreinador(id,nome){
 // pedimos uma vez só.
 const AT_MODULOS=[
   {ic:'📅',nome:'Planner do Treinador',url:'retencao/sistema_integrado_v3.html',quem:'Treinador(a)',desc:'Home, agenda, carteira e consultoria técnica com o aluno.'},
-  {ic:'✍️',nome:'Diário do Treinador',url:'retencao/diario_treinador.html',quem:'Treinador(a)',desc:'Relatório diário de atividades e resultados.'},
+  {ic:'✍️',nome:'Lançamento do dia',url:'retencao/lancamento_dia.html',quem:'Treinador(a) · computador da academia',desc:'Cada treinador clica no nome, digita a senha e lança o dia. Volta sozinho para a lista.'},
   {ic:'✅',nome:'Revisão de Treino',url:'retencao/revisao_treino.html',quem:'Treinador(a)',desc:'Checklist guiado da revisão de treino.'},
   {ic:'📊',nome:'Gestão da Retenção',url:'retencao/dashboard_gestor_v3.html',quem:'Gestor(a)',desc:'Indicadores, equipe, renovações e carteiras.'},
   {ic:'🗂️',nome:'Atualizar Carteira',url:'retencao/importar_carteira.html',quem:'Gestor(a)',desc:'Suba a planilha de alunos e distribua a carteira.'},
@@ -5226,7 +5229,7 @@ async function renderAreaTreinador(){
   grid.innerHTML=AT_MODULOS.map((m,i)=>`<button class="at-card" onclick="atAbrir(${i})"><div class="at-ic">${m.ic}</div><h4>${m.nome}</h4><p>${m.desc}</p><span class="at-who">${m.quem}</span></button>`).join('');
   const ses=await atSessao();
   document.getElementById('at-dot').classList.toggle('on',!!ses);
-  document.getElementById('at-status-txt').textContent=ses?('Conectado à Retenção como '+(ses.user.email||'')):'Ainda não conectado à Retenção neste navegador.';
+  document.getElementById('at-status-txt').textContent=ses?('✓ Área do Treinador conectada como '+(ses.user.email||'')+' (mesma senha do Hub).'):'Área do Treinador não conectada neste navegador. Clique em Conectar e use a mesma senha do Hub.';
   document.getElementById('at-btn-conectar').style.display=ses?'none':'';
   document.getElementById('at-btn-trocar').style.display=ses?'':'none';
 }
@@ -5251,7 +5254,7 @@ async function atConfirmarSenha(){
   const b=document.getElementById('ret-ok');b.disabled=true;b.textContent='Verificando...';
   const ok=await atConectar(email,senha);
   b.disabled=false;b.textContent='Entrar';
-  if(!ok){err.textContent='E-mail ou senha da Retenção incorretos.';err.classList.add('show');return}
+  if(!ok){err.textContent='Não entrou. Se você digitou a senha do Hub e não funcionou, a senha da Área do Treinador está diferente: peça ao suporte para igualar.';err.classList.add('show');return}
   closeM('m-ret');
   await renderAreaTreinador();
   if(atPendente!==null){const m=AT_MODULOS[atPendente];atPendente=null;window.open(m.url,'_blank');}

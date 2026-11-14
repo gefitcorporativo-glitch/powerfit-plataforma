@@ -106,9 +106,27 @@
   .sw input:checked+i:before{transform:translateX(18px)}
   .linkbox{font-family:monospace;font-size:11.5px;background:var(--s2);border:1px dashed var(--bd);border-radius:8px;padding:8px 10px;word-break:break-all;color:var(--tm);margin:10px 0}
   .small{font-size:11.5px;color:var(--td);margin-top:10px;line-height:1.5}
+  .qz th,.qz td{text-align:center}
+  .qz th:first-child,.qz td:first-child{text-align:left}
+  .qz td.mes,.qz th.mes{background:rgba(230,169,43,.08);font-weight:700}
+  .qz tr.sub td:first-child{padding-left:22px;color:var(--tm)}
+  .qz tr.calc td{color:var(--or);font-weight:700}
+  .dias{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .dia{min-width:44px;padding:6px 4px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--td);font-size:11px;text-align:center;cursor:pointer;line-height:1.25}
+  .dia b{display:block;font-size:13px;color:var(--tm)}
+  .dia.ok{border-color:rgba(34,197,94,.35);color:var(--gr)}
+  .dia.ped{border-color:rgba(245,158,11,.6);color:var(--am);background:rgba(245,158,11,.08)}
+  .dia.lib{border-color:rgba(96,165,250,.5);color:#60A5FA}
+  .dia.hoje{outline:1px dashed var(--or)}
+  .ped-lista{margin-top:12px;font-size:13px}
+  .ped-lista div{padding:7px 0;border-top:1px solid var(--bd)}
+  .conn{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px}
   @media(max-width:620px){.two{grid-template-columns:1fr}.comb-row{grid-template-columns:1fr 120px 30px}}
 </style>
 <script src="gf-embed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="retencao/config.js"></script>
+<script src="diario-retencao.js"></script>
 <link rel="stylesheet" href="theme-gefit.css">
 </head>
 <body>
@@ -216,6 +234,15 @@
         <div id="ind-corpo" hidden></div>
       </div>
 
+      ${canEdit?`<div class="card" id="card-dia">
+        <div class="card-hd">
+          <h3>✍️ Lançamento do dia · quinzenas</h3>
+          <select class="fi" id="dia-mes" style="width:auto;padding:6px 10px" onchange="DIA.mes=+this.value;renderDiario()"></select>
+        </div>
+        <div class="sub" style="margin-top:0">O que o treinador lançou no computador da academia. Q1 = dia 1 a 15 · Q2 = dia 16 ao fim do mês. Só a gestão vê.</div>
+        <div id="dia-corpo"><div class="item" style="color:var(--td)">Carregando...</div></div>
+      </div>`:''}
+
       <div class="card" id="card-1a1">
         <div class="card-hd">
           <h3>🗣️ Reuniões 1:1</h3>
@@ -303,6 +330,7 @@
   const soma=(...v)=>v.every(x=>x==null)?null:v.reduce((s,x)=>s+(x||0),0);
   const IND_LINHAS=[
     {k:'carteira',n:'Carteira de alunos',ano:'media'},
+    {k:'alunos_novos',n:'Alunos novos',ano:'soma'},
     {k:'exp_realizadas',n:'Experiências realizadas',ano:'soma'},
     {k:'exp_convertidas',n:'Experiências convertidas',ano:'soma'},
     {k:'conv',n:'Conversão de experiência (%)',pct:true,calc:m=>pct(m.exp_convertidas,m.exp_realizadas)},
@@ -310,6 +338,9 @@
     {k:'cons_leads',n:'Com leads (Experiência)',sub:true,ano:'soma'},
     {k:'cons_alunos',n:'Com alunos',sub:true,ano:'soma'},
     {k:'aval_tec',n:'Avaliações tecnológicas realizadas',ano:'soma'},
+    {k:'rev_agendadas',n:'Revisões de treino agendadas',ano:'soma'},
+    {k:'rev_realizadas',n:'Revisões de treino realizadas',ano:'soma'},
+    {k:'rev_pct',n:'Revisões realizadas (%)',pct:true,calc:m=>pct(m.rev_realizadas,m.rev_agendadas)},
     {k:'a_renovar',n:'Encarteirados a renovar',ano:'soma'},
     {k:'renovados',n:'Encarteirados renovados',ano:'soma'},
     {k:'retencao',n:'Retenção (%)',pct:true,calc:m=>pct(m.renovados,m.a_renovar)}
@@ -351,8 +382,10 @@
       const rows=await sbGet('powerfit_treinador_indicadores',`treinador_id=eq.${treinadorId}&ano=eq.${IND.ano}`);
       rows.forEach(r=>IND.dados[r.mes]=r);
     }catch(e){IND.erro='A tabela de indicadores ainda não existe no banco. Rode o SQL powerfit-perfil-colaborador.sql no Supabase.'}
+    aplicarDiarioNoAno();
     renderResumo();
     if(IND.aberto)renderIndicadores();
+    if(canEdit)carregarDiario();
   }
   // valor que vale para a conta: o digitado; se não houver, a sugestão do sistema
   function efetivo(m){const d=IND.dados[m]||{},s=IND.sug[m]||{},o={};IND_CAMPOS.forEach(k=>{o[k]=d[k]!=null?Number(d[k]):(s[k]!=null?s[k]:null)});return o}
@@ -395,7 +428,7 @@
         <span class="saved" id="ind-saved">✓ salvo</span>
       </div>
       <div class="leg">⚙️ Linhas calculadas sozinhas: conversão = convertidas ÷ realizadas · consultorias = leads + alunos · retenção = renovados ÷ a renovar. Coluna ${IND.ano}: carteira em média; os demais em total.
-      ${canEdit?'<br>Números em <i style="color:rgba(230,169,43,.8)">dourado e itálico</i> são sugestões do sistema (experiências, consultorias de Experiência e carteira do mês atual). Digite por cima para corrigir.':''}</div>`;
+      ${canEdit?'<br>Números em <i style="color:rgba(230,169,43,.8)">dourado e itálico</i> são sugestões do sistema: o Lançamento do dia do treinador (experiências, alunos novos, consultorias, avaliações e revisões), as experiências do Hub e a carteira do mês atual. Digite por cima para corrigir.':''}</div>`;
   }
   async function salvarIndicador(inp){
     const m=+inp.dataset.m,k=inp.dataset.k;const v=inp.value===''?null:Math.max(0,Number(inp.value));
@@ -412,6 +445,91 @@
       if(Object.keys(o).length)lote.push(Object.assign({academia_id:treinador.academia_id,treinador_id:treinadorId,ano:IND.ano,mes:+m,updated_at:Date.now()},o))});
     if(!lote.length)return;
     try{for(const r of lote){await sbUpsert('powerfit_treinador_indicadores',r)}await carregarIndicadores()}catch(e){console.error(e);alert('Não foi possível salvar as sugestões.')}
+  }
+
+  /* ======================= LANÇAMENTO DO DIA (ÁREA DO TREINADOR) ======================= */
+  const DIA={mes:new Date().getMonth()+1,ret:null,academiaRet:null,rowsAno:[],libs:[],estado:'carregando',msg:''};
+  const MESES_L=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  function normNome(t){return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim()}
+  async function carregarDiario(){
+    if(!window.DR){DIA.estado='erro';DIA.msg='Não foi possível carregar a ligação com a Área do Treinador.';return renderDiario()}
+    const sel=document.getElementById('dia-mes');
+    if(sel&&!sel.options.length){sel.innerHTML=MESES_L.map((m,i)=>`<option value="${i+1}" ${i+1===DIA.mes?'selected':''}>${m} ${IND.ano}</option>`).join('')}
+    else if(sel){[...sel.options].forEach((o,i)=>o.textContent=MESES_L[i]+' '+IND.ano)}
+    try{
+      if(!(await DR.sessao())){DIA.estado='desconectado';return renderDiario()}
+      const g=await DR.gestor();
+      if(!g){DIA.estado='nao_gestor';return renderDiario()}
+      DIA.academiaRet=g.academia_id;
+      const [logins,ts]=await Promise.all([sbGet('powerfit_gestores',`treinador_id=eq.${treinadorId}&select=email`).catch(()=>[]),DR.treinadores(g.academia_id)]);
+      const emails=logins.map(l=>String(l.email||'').toLowerCase());
+      DIA.ret=ts.find(t=>emails.includes(String(t.email||'').toLowerCase()))||ts.find(t=>normNome(t.nome)===normNome(treinador.nome))||ts.find(t=>normNome(t.nome).split(' ')[0]===normNome(treinador.nome).split(' ')[0]&&ts.filter(x=>normNome(x.nome).split(' ')[0]===normNome(t.nome).split(' ')[0]).length===1);
+      if(!DIA.ret){DIA.estado='sem_cadastro';return renderDiario()}
+      DIA.rowsAno=await DR.diario(g.academia_id,`${IND.ano}-01-01`,`${IND.ano}-12-31`,DIA.ret.id);
+      try{DIA.libs=await DR.liberacoes(String(DIA.ret.email||'').toLowerCase())}catch(e){DIA.libs=[]}
+      DIA.estado='ok';
+      aplicarDiarioNoAno();renderResumo();if(IND.aberto){const w=document.querySelector('.ind-wrap'),sc=w?w.scrollLeft:0;renderIndicadores();const w2=document.querySelector('.ind-wrap');if(w2)w2.scrollLeft=sc}
+    }catch(e){console.error(e);DIA.estado='erro';DIA.msg='Não foi possível ler os lançamentos agora.'}
+    renderDiario();
+  }
+  // Os totais do Lançamento do dia viram sugestão na tabela do ano
+  function aplicarDiarioNoAno(){
+    if(!DIA.rowsAno||!DIA.rowsAno.length||!window.DR)return;
+    const por={};DIA.rowsAno.filter(r=>String(r.data).startsWith(IND.ano+'-')).forEach(r=>{const m=+String(r.data).slice(5,7);(por[m]=por[m]||[]).push(r)});
+    Object.entries(por).forEach(([m,rows])=>{
+      const t=DR.soma(rows);IND.sug[m]=IND.sug[m]||{};
+      Object.assign(IND.sug[m],{exp_realizadas:t.experiencias_iniciadas,alunos_novos:t.novos_alunos,cons_leads:t.consultorias_leads,cons_alunos:t.consultorias_alunos,aval_tec:t.avaliacoes_realizadas,rev_agendadas:t.revisoes_previstas,rev_realizadas:t.revisoes_realizadas});
+    });
+  }
+  function renderDiario(){
+    const el=document.getElementById('dia-corpo');if(!el)return;
+    if(DIA.estado==='carregando'){el.innerHTML='<div class="item" style="color:var(--td)">Carregando...</div>';return}
+    if(DIA.estado==='desconectado'||DIA.estado==='nao_gestor'){
+      el.innerHTML=`<div class="conn">
+        <div style="font-size:13.5px;margin-bottom:10px">${DIA.estado==='nao_gestor'?'Este navegador está conectado à Área do Treinador com um login que não é de gestor(a).':'Para ver os lançamentos, conecte a Área do Treinador neste navegador.'}
+        <br><b>É o mesmo e-mail e a mesma senha do Hub.</b> Só precisa fazer uma vez.</div>
+        <div class="row row2"><div class="fg"><label class="fl">E-mail</label><input class="fi" id="dc-email" value="${esc(viewer.email||'')}"></div>
+        <div class="fg"><label class="fl">Senha (a mesma do Hub)</label><input class="fi" type="password" id="dc-senha" onkeydown="if(event.key==='Enter')conectarDiario()"></div></div>
+        <button class="btn" id="dc-ok" onclick="conectarDiario()">Conectar</button> <span id="dc-err" style="color:var(--re);font-size:12.5px;margin-left:8px"></span></div>`;
+      return;
+    }
+    if(DIA.estado==='sem_cadastro'){el.innerHTML=`<div class="item" style="color:var(--am)">⚠️ ${esc(treinador.nome)} ainda não tem cadastro na Área do Treinador, então não consegue lançar o dia. Cadastre pelo Painel Admin ou pela Equipe da Área do Treinador, com o mesmo e-mail do Hub.</div>`;return}
+    if(DIA.estado==='erro'){el.innerHTML=`<div class="item" style="color:var(--am)">⚠️ ${esc(DIA.msg)}</div>`;return}
+    const ano=IND.ano,mes=DIA.mes,rows=DIA.rowsAno.filter(r=>+String(r.data).slice(5,7)===mes);
+    const P=DR.porPeriodo(rows,ano,mes),Q=DR.quinzenas(ano,mes);
+    const uteis={q1:DR.diasUteis(...Q.q1).length,q2:DR.diasUteis(...Q.q2).length,mes:DR.diasUteis(...Q.mes).length};
+    const col=(k,f)=>['q1','q2','mes'].map(p=>`<td class="${p==='mes'?'mes':''}">${uteis[p]?f(P[p],p):'<span style="color:var(--td)">·</span>'}</td>`).join('');
+    const linhas=DR.CAMPOS.map(c=>`<tr class="${c.sub?'sub':''} ${c.calc?'calc':''}"><td>${c.calc?'⚙️ ':''}${c.n}</td>${col(c.k,t=>t[c.k])}</tr>`).join('')
+      +`<tr class="calc"><td>⚙️ Revisões realizadas (%)</td>${col('',t=>t.rev_pct==null?'·':t.rev_pct+'%')}</tr>`
+      +`<tr class="calc"><td>⚙️ Saldo de revisões</td>${col('',t=>`<span style="color:${t.rev_saldo<0?'var(--re)':'var(--gr)'}">${t.rev_saldo>0?'+':''}${t.rev_saldo}</span>`)}</tr>`
+      +`<tr><td>Dias lançados</td>${col('',(t,p)=>`${t.dias} de ${uteis[p]}`)}</tr>`;
+    const lanc={};rows.forEach(r=>lanc[r.data]=r);
+    const libPend={};DIA.libs.filter(l=>!l.usado).forEach(l=>libPend[l.data]=l);
+    const hj=hojeISO();
+    const dias=DR.diasUteis(...Q.mes).map(d=>{const r=lanc[d],cls=libPend[d]?'lib':(r&&r.pedido_correcao?'ped':(r?'ok':''));
+      const ic=libPend[d]?'🔓':(r&&r.pedido_correcao?'⚠':(r?'✓':'–'));
+      const dw=['dom','seg','ter','qua','qui','sex','sáb'][new Date(d+'T12:00:00').getDay()];
+      return`<button class="dia ${cls} ${d===hj?'hoje':''}" title="${r?'Lançado':'Sem lançamento'}${libPend[d]?' · correção liberada':''}" onclick="clicarDia('${d}')"><b>${d.slice(8)}</b>${dw} ${ic}</button>`}).join('');
+    const peds=rows.filter(r=>r.pedido_correcao);
+    el.innerHTML=`<table class="qz"><thead><tr><th>Indicador</th><th>Q1 · 1 a 15</th><th>Q2 · 16 a ${DR.ultimoDia(ano,mes)}</th><th class="mes">${MESES_L[mes-1]}</th></tr></thead><tbody>${linhas}</tbody></table>
+      <div class="dias">${dias||'<span style="color:var(--td);font-size:12.5px">Mês ainda não começou.</span>'}</div>
+      <div class="leg">✓ lançado · – sem lançamento · ⚠ pediu correção · 🔓 correção liberada. <b>Clique num dia que já passou para liberar a correção</b> (ou o lançamento de um dia esquecido).</div>
+      ${peds.length?`<div class="ped-lista"><b style="color:var(--am)">Pedidos de correção</b>${peds.map(r=>`<div>${fmtData(r.data)}: ${esc(r.obs||r.pedido_correcao)}</div>`).join('')}</div>`:''}`;
+  }
+  async function conectarDiario(){
+    const b=document.getElementById('dc-ok'),er=document.getElementById('dc-err');er.textContent='';b.disabled=true;b.textContent='Conectando...';
+    const r=await DR.conectar(document.getElementById('dc-email').value,document.getElementById('dc-senha').value);
+    b.disabled=false;b.textContent='Conectar';
+    if(!r.ok){er.textContent=r.msg;return}
+    DIA.estado='carregando';renderDiario();carregarDiario();
+  }
+  async function clicarDia(d){
+    if(d>=hojeISO())return alert('O dia de hoje o treinador lança normalmente. A liberação é para dias que já passaram.');
+    if(DIA.libs.some(l=>l.data===d&&!l.usado))return alert('A correção deste dia já está liberada. Ela aparece para o treinador na próxima vez que ele entrar no Lançamento do dia.');
+    if(!confirm(`Liberar ${DIA.ret.nome} para lançar ou corrigir o dia ${fmtData(d)}?\nA liberação vale uma vez e aparece para ele no Lançamento do dia.`))return;
+    try{await DR.liberar({academia_id:treinador.academia_id,treinador_email:String(DIA.ret.email||'').toLowerCase(),treinador_nome:DIA.ret.nome,data:d,liberado_por:viewer.nome||''});
+      DIA.libs=await DR.liberacoes(String(DIA.ret.email||'').toLowerCase());renderDiario()}
+    catch(e){console.error(e);alert('Não foi possível liberar. Confira se o SQL powerfit-perfil-colaborador.sql já foi rodado.')}
   }
 
   /* ======================= REUNIÕES 1:1 (ATA CURTA) ======================= */
