@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Desafio ROI 21 Dias | Power Fit</title>
+<title>Hub de Gestão | Power Fit</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>window.ACADEMIA_CFG={nome:"Power Fit",presente:"o mapeamento completo da sua saúde + uma consultoria com um treinador",cor:"#E6A92B",corT:"#9C6A12",corTexto:"#111",escuro:"#111",fundo:"#F7F4EC"};</script>
 <script src="ferramentas-academia.js"></script>
@@ -276,7 +276,7 @@ body.role-consultor #painel-prod-time,body.role-consultor #painel-cons-filter{di
 <div class="auth-screen active" id="screen-login">
   <div class="auth-box">
     <div class="auth-logo"><img class="auth-logo-img" src="logo-powerfit.png" alt="Power Fit"></div>
-    <div class="auth-sub">Desafio ROI 21 Dias</div>
+    <div class="auth-sub">Hub de Gestão</div>
     <div class="auth-err" id="login-err"></div>
     <div class="fg" style="margin-bottom:12px">
       <label class="fl">E-mail</label>
@@ -295,7 +295,7 @@ body.role-consultor #painel-prod-time,body.role-consultor #painel-cons-filter{di
 <div class="auth-screen" id="screen-cadastro">
   <div class="auth-box">
     <div class="auth-logo"><img class="auth-logo-img" src="logo-powerfit.png" alt="Power Fit"></div>
-    <div class="auth-sub">Criar Conta, Desafio ROI 21 Dias</div>
+    <div class="auth-sub">Criar conta, Hub de Gestão</div>
     <div class="auth-err" id="cad-err"></div>
     <div class="auth-ok" id="cad-ok"></div>
     <div class="fg" style="margin-bottom:10px"><label class="fl">Nome da Academia</label><input class="fi" id="cad-academia" placeholder="Ex: Iron Fitness Sorocaba"></div>
@@ -314,7 +314,7 @@ body.role-consultor #painel-prod-time,body.role-consultor #painel-cons-filter{di
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:12px">
       <img class="topbar-logo-img" src="logo-powerfit.png" alt="Power Fit">
-      <span class="topbar-title" id="topbar-ac-nome">Desafio ROI 21 Dias</span>
+      <span class="topbar-title" id="topbar-ac-nome">Hub de Gestão</span>
     </div>
     <div class="topbar-r">
       <span style="font-size:11px;color:var(--td);display:flex;align-items:center;white-space:nowrap"><span class="sync-dot" id="sync-dot"></span><span id="sync-txt">conectando...</span></span>
@@ -1216,7 +1216,7 @@ body.role-consultor #painel-prod-time,body.role-consultor #painel-cons-filter{di
         <div style="background:linear-gradient(135deg,#1a0a00,#0a0a1a);border:1px solid var(--bdo);border-radius:12px;padding:28px;margin-bottom:20px;text-align:center">
           <div style="font-size:36px;margin-bottom:8px">🏋️</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--or);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Guia do Gestor</div>
-          <div style="font-size:14px;color:var(--td)">Desafio ROI 21 Dias, Como usar a plataforma</div>
+          <div style="font-size:14px;color:var(--td)">Hub de Gestão, como usar a plataforma</div>
         </div>
 
         <!-- PASSOS RÁPIDOS -->
@@ -2163,7 +2163,7 @@ function calcProdutividade(regs){
 // ══ RENDER ALL ══
 async function renderAll(){
   const a=ac();
-  document.getElementById('topbar-ac-nome').textContent=a?a.nome:'Desafio ROI 21 Dias';
+  document.getElementById('topbar-ac-nome').textContent=a?a.nome:'Hub de Gestão';
   if(a){renderPainel(a);renderFunis();renderConsGrid(a);renderTreinadoresGrid(a);renderRelatorio();carregarGeral();}
   renderRanking();if(isAdmin())await renderAdminPanel();
   populateFilters();populateLancCons();
