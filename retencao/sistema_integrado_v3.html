@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <script src="config.js"></script>
+<script src="carteira_match.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema Depto. Técnico</title>
@@ -667,7 +668,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-
       <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;font-size:12px;color:var(--muted);line-height:1.7">
         <div style="font-weight:700;color:var(--text);margin-bottom:6px">Formato do CSV:</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--orange)">nome,matricula,plano,vencimento,idade,telefone</div>
-        <div style="margin-top:6px;font-size:11px">• Separador: vírgula<br>• Vencimento: dd/mm/aaaa<br>• Plano: anual / mensal / recorrencia<br>• Primeira linha = cabeçalho (ignorada)</div>
+        <div style="margin-top:6px;font-size:11px">• Separador: vírgula<br>• Vencimento: dd/mm/aaaa<br>• Plano: anual / mensal / recorrencia<br>• Primeira linha = cabeçalho (ignorada)<br>• Cada linha é gravada sozinha. Se uma falhar, as outras seguem e o motivo aparece aqui.<br>• O aluno entra na carteira de quem está logado. Gestor não atribui treinador por aqui.</div>
       </div>
       <div style="border:2px dashed var(--border2);border-radius:10px;padding:24px;text-align:center;cursor:pointer" onclick="document.getElementById('csvFileInput').click()">
         <div style="font-size:24px;margin-bottom:8px">📤</div>
@@ -676,6 +677,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-
         <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="processarCSV(this)">
       </div>
       <div id="csvPreview" style="margin-top:10px;display:none"></div>
+      <div id="csvResultado" style="margin-top:8px;display:none"></div>
       <button id="btnImportarCSV" onclick="importarCSV()" style="display:none;width:100%;margin-top:10px;padding:13px;border-radius:10px;border:none;background:var(--orange);color:#000;font-size:14px;font-weight:800;cursor:pointer;font-family:'Barlow Condensed',sans-serif">Importar alunos</button>
       <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--muted)">
         Tem uma planilha grande, com e-mail, status ou treinador de cada aluno? <a href="importar_carteira.html" target="_blank" style="color:var(--orange);font-weight:700;text-decoration:underline">Use o importador completo →</a>
@@ -2336,8 +2338,17 @@ function processarCSV(input){
         ${csvDados.length>5?`<div style="padding:4px 0;color:var(--muted)">... e mais ${csvDados.length-5} alunos</div>`:''}
       </div>`;
     document.getElementById('btnImportarCSV').style.display = 'block';
+    const resultado = document.getElementById('csvResultado');
+    if(resultado){ resultado.style.display = 'none'; resultado.innerHTML = ''; }
   };
   reader.readAsText(file, 'UTF-8');
+}
+
+function erroSupabase(error){
+  if(window.CarteiraMatch) return CarteiraMatch.msgErroSupabase(error);
+  if(!error) return 'erro desconhecido';
+  if(typeof error === 'string') return error;
+  return [error.code, error.message].filter(Boolean).join(' · ') || 'erro desconhecido';
 }
 
 async function importarCSV(){
@@ -2345,29 +2356,64 @@ async function importarCSV(){
   if(!sbSys || !currentAcademiaId){ showToast('Erro: não conectado'); return; }
 
   const treinadorLocal = JSON.parse(localStorage.getItem('qg90_treinador')||'{}');
+  const treinadorId = (treinadorLocal.tipo === 'gestor') ? null : (treinadorLocal.id || null);
   const btn = document.getElementById('btnImportarCSV');
+  const resultado = document.getElementById('csvResultado');
   btn.disabled = true;
-  btn.textContent = `Importando ${csvDados.length} alunos...`;
+  if(resultado){ resultado.style.display = 'none'; resultado.innerHTML = ''; }
 
-  try {
-    const inserts = csvDados.map(a => ({
-      ...a,
+  const falhas = [];
+  let ok = 0;
+  const pendentes = csvDados.slice();
+  for(let i=0; i<pendentes.length; i++){
+    const a = pendentes[i];
+    btn.textContent = `Gravando ${i+1} de ${pendentes.length}...`;
+    const { data, error } = await sbSys.from('alunos').insert([{
+      nome: a.nome,
+      matricula: a.matricula,
+      plano: a.plano,
+      vencimento: a.vencimento,
+      idade: a.idade,
+      telefone: a.telefone,
       academia_id: currentAcademiaId,
-      treinador_id: treinadorLocal.id || null,
+      treinador_id: treinadorId,
       ativo: true,
-    }));
+    }]).select('id');
+    if(error || !data || !data.length){
+      falhas.push({ row: a, nome: a.nome || '(sem nome)', motivo: error ? erroSupabase(error) : 'O banco não confirmou a gravação desta linha.' });
+    } else {
+      ok++;
+    }
+  }
 
-    const { error } = await sbSys.from('alunos').insert(inserts);
-    if(error) throw new Error(error.message);
-
-    showToast(`✅ ${csvDados.length} alunos importados!`);
+  csvDados = falhas.map(f => f.row);
+  btn.disabled = false;
+  btn.textContent = csvDados.length ? 'Tentar de novo as que falharam' : 'Importar alunos';
+  if(resultado){
+    resultado.style.display = 'block';
+    const linhas = falhas.slice(0, 30).map(f => {
+      const nome = String(f.nome).replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+      const motivo = String(f.motivo).replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+      return `<div style="padding:3px 0;border-bottom:1px solid var(--border)">${nome} - ${motivo}</div>`;
+    }).join('');
+    const resto = falhas.length > 30 ? `<div style="padding:4px 0">e mais ${falhas.length-30} linha(s).</div>` : '';
+    resultado.innerHTML = falhas.length
+      ? `<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:10px 12px;font-size:12px;color:#F0A8A8">
+          ${ok} gravado(s). ${falhas.length} não entrou(ram). O botão tenta só estas de novo.
+          <div style="max-height:140px;overflow:auto;margin-top:6px;font-family:'DM Mono',monospace;font-size:11px">${linhas}${resto}</div>
+        </div>`
+      : `<div style="background:var(--green-dim);border:1px solid var(--green-border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--green)">${ok} aluno(s) gravado(s).</div>`;
+  }
+  if(ok && !falhas.length){
+    showToast(ok + ' aluno(s) importado(s)');
     fecharModalHome('modalAddAluno');
     csvDados = [];
     await carregarDadosHome();
-  } catch(err){
-    showToast('Erro: '+err.message);
-    btn.disabled = false;
-    btn.textContent = 'Importar alunos';
+  } else if(ok){
+    showToast(ok + ' gravado(s), ' + falhas.length + ' falharam');
+    await carregarDadosHome();
+  } else {
+    showToast('Nenhum aluno foi gravado');
   }
 }
 
@@ -2456,14 +2502,18 @@ function toggleCarteira(){
 async function converterExp(id, nome){
   if(!confirm(`Converter "${nome}" para aluno ativo?`)) return;
   try {
-    await sbSys.from('experiencias').update({status_funil:'convertida', convertido:true}).eq('id',id);
-    // Criar aluno na carteira
+    const { error: errExp } = await sbSys.from('experiencias').update({status_funil:'convertida', convertido:true}).eq('id',id).select('id');
+    if(errExp) throw new Error(erroSupabase(errExp));
     const treinadorLocal = JSON.parse(localStorage.getItem('qg90_treinador')||'{}');
-    await sbSys.from('alunos').insert([{
+    const treinadorId = (treinadorLocal.tipo === 'gestor') ? null : (treinadorLocal.id || null);
+    const { data: novoAluno, error: errAluno } = await sbSys.from('alunos').insert([{
       academia_id: currentAcademiaId,
-      treinador_id: treinadorLocal.id||null,
+      treinador_id: treinadorId,
       nome, ativo: true, plano:'anual',
-    }]);
+    }]).select('id');
+    if(errAluno || !novoAluno || !novoAluno.length){
+      throw new Error('A experiência foi marcada, mas o aluno não entrou na carteira: ' + (errAluno ? erroSupabase(errAluno) : 'o banco não confirmou a gravação.'));
+    }
     showToast('✅ Lead convertido e adicionado à carteira!');
     await carregarDadosHome();
   } catch(err){ showToast('Erro: '+err.message); }
@@ -3263,24 +3313,24 @@ async function salvarPlannerSupabase(){
 
   // Buscar ou criar aluno (na edição, usa e atualiza o mesmo aluno)
   let alunoId = null;
+  ultimoErroBanco = '';
   if(editingPlannerId && editingAlunoId){
     alunoId = editingAlunoId;
-    try { await sbSys.from('alunos').update({ nome: pState.nome, matricula: pState.matricula || null, idade: parseInt(pState.idade) || null }).eq('id', alunoId); }
-    catch(err){ console.warn('Erro ao atualizar aluno:', err); }
-  } else try {
-    // Tentar encontrar aluno existente
-    const { data: alunoExist } = await sbSys
+    const { data: alunoUp, error: errAlunoUp } = await sbSys.from('alunos').update({ nome: pState.nome, matricula: pState.matricula || null, idade: parseInt(pState.idade) || null }).eq('id', alunoId).select('id');
+    if(errAlunoUp || !alunoUp || !alunoUp.length){ ultimoErroBanco = errAlunoUp ? erroSupabase(errAlunoUp) : 'O banco não confirmou a atualização do aluno.'; return null; }
+  } else {
+    const { data: alunoExist, error: errBusca } = await sbSys
       .from('alunos')
       .select('id')
       .eq('academia_id', currentAcademiaId)
       .eq('matricula', pState.matricula || pState.nome)
-      .single();
+      .maybeSingle();
+    if(errBusca){ ultimoErroBanco = erroSupabase(errBusca); return null; }
 
     if(alunoExist){
       alunoId = alunoExist.id;
     } else {
-      // Criar novo aluno
-      const { data: novoAluno } = await sbSys
+      const { data: novoAluno, error: errAlunoIns } = await sbSys
         .from('alunos')
         .insert([{
           academia_id: currentAcademiaId,
@@ -3291,13 +3341,13 @@ async function salvarPlannerSupabase(){
         }])
         .select()
         .single();
-      if(novoAluno) alunoId = novoAluno.id;
+      if(errAlunoIns){ ultimoErroBanco = erroSupabase(errAlunoIns); return null; }
+      if(!novoAluno){ ultimoErroBanco = 'O banco não confirmou o cadastro do aluno.'; return null; }
+      alunoId = novoAluno.id;
     }
-  } catch(err){
-    console.warn('Erro aluno:', err);
   }
 
-  if(!alunoId) return null;
+  if(!alunoId){ if(!ultimoErroBanco) ultimoErroBanco = 'Não foi possível gravar o aluno.'; return null; }
 
   // Buscar IDs dos treinadores pelo nome
   let treinadorRespId = null;
@@ -3374,7 +3424,7 @@ async function salvarPlannerSupabase(){
       ? await sbSys.from('planners').update(plannerData).eq('id', editingPlannerId).select().single()
       : await sbSys.from('planners').insert([plannerData]).select().single();
 
-    if(error){ console.error('Erro ao salvar planner:', error); return null; }
+    if(error){ ultimoErroBanco = erroSupabase(error); console.error('Erro ao salvar planner:', error); return null; }
     currentPlannerId = planner.id;
 
     // Auto-cria compromisso de "revisão de treino" na Agenda, se uma data foi definida
@@ -3447,6 +3497,7 @@ window.gerarApp = async function(){
   showToast(editingPlannerId ? '💾 Salvando alterações do planner...' : '💾 Salvando planner...');
 
   // Salvar no Supabase
+  ultimoErroBanco = '';
   const plannerId = await salvarPlannerSupabase();
 
   const eraEdicao = !!editingPlannerId;
@@ -3455,6 +3506,9 @@ window.gerarApp = async function(){
     currentPlannerId = plannerId;
     ultimoPlannerSalvo = { id: plannerId, alunoId: ultimoAlunoSalvoId, chave: chavePlannerAtual() };
     editingPlannerId = null; editingAlunoId = null; atualizarFaixaEdicao();
+  } else if(ultimoErroBanco){
+    showToast('Erro ao salvar: ' + ultimoErroBanco);
+    return;
   } else {
     showToast('⚠️ Modo offline — dados não salvos no banco');
   }
@@ -3491,7 +3545,7 @@ window.gerarApp = async function(){
     document.querySelectorAll('.btn-gerar').forEach(b => { b.disabled = false; if(b.dataset.txt) b.textContent = b.dataset.txt; b.style.opacity = ''; });
   }
 };
-let salvandoPlanner = false, ultimoPlannerSalvo = null, ultimoAlunoSalvoId = null;
+let salvandoPlanner = false, ultimoPlannerSalvo = null, ultimoAlunoSalvoId = null, ultimoErroBanco = '';
 function chavePlannerAtual(){ return String((pState.matricula||'') + '|' + (pState.nome||'')).trim().toLowerCase(); }
 
 

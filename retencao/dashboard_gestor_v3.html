@@ -2031,11 +2031,16 @@ async function reatribuirCicloSelecionados(){
   if(!ids.length) return;
 
   try {
-    const { error } = await sb.from('alunos').update({ treinador_id: treinadorId }).in('id', ids);
-    if(error) throw new Error(error.message);
+    const { data, error } = await sb.from('alunos').update({ treinador_id: treinadorId }).in('id', ids).select('id');
+    if(error) throw new Error([error.code, error.message].filter(Boolean).join(' · '));
+    const idsOk = new Set((data||[]).map(r=>r.id));
     const nomeTreinador = TREINADORES.find(t=>t.id===treinadorId)?.nome || 'treinador(a)';
-    ids.forEach(id => { const a = CICLO_ALUNOS.find(x=>x.id===id); if(a) a.treinador = nomeTreinador; });
-    showToast(`✅ ${ids.length} aluno(s) direcionado(s) para ${nomeTreinador}`);
+    ids.forEach(id => { if(!idsOk.has(id)) return; const a = CICLO_ALUNOS.find(x=>x.id===id); if(a) a.treinador = nomeTreinador; });
+    if(idsOk.size < ids.length){
+      showToast(`Atenção: ${idsOk.size} de ${ids.length} aluno(s) foram direcionados para ${nomeTreinador}.`);
+    } else {
+      showToast(`✅ ${idsOk.size} aluno(s) direcionado(s) para ${nomeTreinador}`);
+    }
     limparSelecaoCiclo();
     renderCicloLista();
   } catch(err){

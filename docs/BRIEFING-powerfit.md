@@ -52,3 +52,8 @@ Montar neste repositório (`gefitcorporativo-glitch/powerfit-plataforma`) a plat
 
 ## Pendente conhecido (não bloqueia)
 O login da plataforma (tabela `gestores`, coluna `senha_hash`) compara senha sem criptografia usando a chave pública. Vai junto em toda réplica até ser refeito com Supabase Auth.
+
+## Atualização 27/11/2026 (Retenção, carteira)
+No Supabase do Planner (`xpvedihpejivnkssryhc`), `public.alunos.treinador_id` é uuid, com o índice `alunos_academia_treinador_idx (academia_id, treinador_id)` e sem chave estrangeira. O arquivo no repositório é `retencao-alunos-treinador.sql` (pode rodar de novo). Não confundir com `powerfit_alunos.treinador_id`, que é outra tabela, em outro banco.
+
+A tela Atualizar Carteira só conta linha gravada de verdade, compara o treinador sem acento e sem pedaço de palavra, e deixa `treinador_id` vazio quando o nome não é reconhecido. O id do gestor não entra no lugar. Detalhe e formato da planilha estão no README.

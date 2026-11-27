@@ -104,6 +104,7 @@ tr:last-child td{border-bottom:none}
 .alert-warn{background:var(--yellow-dim);border:1px solid rgba(234,179,8,.25);color:var(--yellow)}
 .alert-err{background:var(--red-dim);border:1px solid rgba(239,68,68,.25);color:var(--red)}
 .alert-info{background:var(--blue-dim);border:1px solid rgba(96,165,250,.25);color:var(--blue)}
+.treinador-lista{max-height:320px;overflow:auto;margin-top:8px}
 
 /* ── BUTTONS ── */
 .btn-primary{padding:14px 24px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--orange),#FFD978);color:#000;font-size:14px;font-weight:800;cursor:pointer;font-family:'Barlow Condensed',sans-serif;transition:opacity .2s;width:100%}
@@ -241,7 +242,7 @@ tr:last-child td{border-bottom:none}
 
       <div class="alert alert-info">
         <span>💡</span>
-        <div>Exporte a <strong>lista de alunos ativos</strong> do seu sistema. Não precisa ser formatada — o conversor detecta as colunas automaticamente.<br>Não tem um arquivo pronto? <a href="#" onclick="baixarModeloPlanilha();return false" style="color:var(--laranja,var(--orange));font-weight:700;text-decoration:underline">📥 Baixe o modelo de planilha</a> e preencha.</div>
+        <div>Exporte a <strong>lista de alunos ativos</strong> do seu sistema. Não precisa ser formatada. O conversor detecta as colunas automaticamente.<br>A coluna do treinador pode se chamar treinador, professor, instrutor, consultor, coach ou responsável. Se o nome não bater com o cadastro, você escolhe na revisão.<br>Não tem um arquivo pronto? <a href="#" onclick="baixarModeloPlanilha();return false" style="color:var(--laranja,var(--orange));font-weight:700;text-decoration:underline">📥 Baixe o modelo de planilha</a> e preencha.</div>
       </div>
 
       <button class="btn-primary" id="btnProStep1" onclick="irStep(2)" disabled>Próximo →</button>
@@ -285,10 +286,15 @@ tr:last-child td{border-bottom:none}
         <div class="card-title">Preview — primeiros 10 alunos</div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>#</th><th>Nome</th><th>Matrícula</th><th>Plano</th><th>Vencimento</th><th>Idade</th><th>Telefone</th><th>Status</th></tr></thead>
+            <thead><tr><th>#</th><th>Nome</th><th>Matrícula</th><th>Plano</th><th>Vencimento</th><th>Idade</th><th>Telefone</th><th>Treinador</th><th>Status</th></tr></thead>
             <tbody id="previewTbody"></tbody>
           </table>
         </div>
+      </div>
+
+      <div class="card" id="cardTreinadores">
+        <div class="card-title">Treinador de cada aluno</div>
+        <div id="revisaoTreinadores" style="font-size:12px;color:var(--muted)">A revisão dos treinadores aparece depois de converter a planilha.</div>
       </div>
 
       <div class="card">
@@ -305,7 +311,7 @@ tr:last-child td{border-bottom:none}
             <input type="radio" name="modoImport" value="atualizar" style="margin-top:2px;accent-color:var(--orange)">
             <div>
               <div style="font-size:13px;font-weight:600">Adicionar e atualizar</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px">Insere novos e atualiza plano/vencimento dos já existentes</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Insere novos e atualiza os dados dos já existentes. O treinador só muda quando a planilha ou a revisão indica um treinador reconhecido.</div>
             </div>
           </label>
           <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;background:var(--red-dim);border:1px solid rgba(239,68,68,.2);border-radius:8px">
@@ -320,7 +326,7 @@ tr:last-child td{border-bottom:none}
 
       <div style="display:flex;gap:10px">
         <button class="btn-sec" onclick="irStep(2)">← Voltar</button>
-        <button class="btn-primary" onclick="irStep(4)">✅ Importar agora</button>
+        <button class="btn-primary" id="btnImportarAgora" onclick="irStep(4)" disabled>✅ Importar agora</button>
       </div>
     </div>
 
@@ -334,17 +340,19 @@ tr:last-child td{border-bottom:none}
           <div class="prog-step idle" id="prog3"><span class="prog-icon">💾</span> Importando alunos...</div>
           <div class="prog-step idle" id="prog4"><span class="prog-icon">✅</span> Finalizando...</div>
         </div>
-        <div id="importLog" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;max-height:120px;overflow-y:auto;background:#111;border-radius:6px;padding:10px;margin-top:10px;display:none"></div>
+        <div id="importLog" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;max-height:220px;overflow-y:auto;background:#111;border-radius:6px;padding:10px;margin-top:10px;display:none"></div>
+        <button class="btn-sec" id="btnVoltarRevisao" style="display:none;margin-top:12px" onclick="irStep(3)">← Voltar à revisão</button>
       </div>
     </div>
 
     <!-- ── STEP 5: SUCESSO ── -->
     <div class="sec" id="step5">
       <div class="success-screen">
-        <div class="success-icon">🎉</div>
-        <div class="success-title">Carteira atualizada!</div>
+        <div class="success-icon" id="successIcon">🎉</div>
+        <div class="success-title" id="successTitle">Carteira atualizada!</div>
         <div class="success-sub" id="successSub">Alunos importados com sucesso para a plataforma Power Fit.</div>
         <div class="success-stats" id="successStats"></div>
+        <div id="successFalhas" style="text-align:left;margin-bottom:16px"></div>
         <button class="btn-primary" onclick="novaImportacao()" style="margin-bottom:10px">📂 Importar outro arquivo</button>
         <button class="btn-sec" onclick="window.location.href='sistema_integrado_v3.html'">← Ir para o sistema</button>
       </div>
@@ -353,15 +361,17 @@ tr:last-child td{border-bottom:none}
   </div><!-- /secApp -->
 </div>
 
+<script src="carteira_match.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 const SUPABASE_URL  = APP_CONFIG.SUPABASE_URL;
 const SUPABASE_ANON = APP_CONFIG.SUPABASE_ANON;
-let sb, sessaoUser, academiaId, treinadorId;
+let sb, sessaoUser, academiaId, treinadorId, tipoPerfil, perfilNome;
 
 // ── STATE ─────────────────────────────────────────────────────
 let rawRows=[], headers=[], sep=',', mapeamento={}, planoMap={}, dadosConvertidos=[];
+let listaTreinadores=[], escolhasTreinador={}, revisaoPronta=false, importando=false;
 
 const CAMPOS = [
   {key:'nome',      label:'Nome',       obrig:true},
@@ -385,7 +395,7 @@ const AUTO_KEYS = {
   idade:      ['idade','age','anos'],
   telefone:   ['telefone','fone','celular','whatsapp','tel','phone'],
   email:      ['email','e-mail','mail'],
-  treinador:  ['treinador','trainer','responsavel','responsável','coach'],
+  treinador:  (window.CarteiraMatch ? CarteiraMatch.TREINADOR_HEADERS.slice() : ['treinador','trainer','responsavel','coach','professor','instrutor','consultor']),
   tipo_vinculo: ['vinculo','vínculo','origem','canal','agregador','wellhub','totalpass','gympass'],
 };
 
@@ -459,10 +469,12 @@ async function loginSucesso(user){
 
   if(!perfil){
     const {data:g} = await sb.from('gestores').select('id,nome,academia_id').eq('user_id',user.id).single();
-    if(g){ perfil=g; tipo='gestor'; treinadorId=g.id; }
+    if(g){ perfil=g; tipo='gestor'; treinadorId=null; }
   }
 
   if(!perfil){ showErr('Perfil não encontrado. Verifique suas credenciais com a equipe de suporte.'); return; }
+  tipoPerfil = tipo;
+  perfilNome = perfil.nome || '';
 
   academiaId = perfil.academia_id;
 
@@ -570,14 +582,9 @@ function parseRow(linha){
 
 // ── MAPEAMENTO ────────────────────────────────────────────────
 function autoMapear(){
-  mapeamento={};
-  CAMPOS.forEach(campo=>{
-    const kws = AUTO_KEYS[campo.key]||[];
-    headers.forEach((h,i)=>{
-      const hl = h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      if(kws.some(k=>hl.includes(k)) && mapeamento[campo.key]===undefined) mapeamento[campo.key]=i;
-    });
-  });
+  if(!window.CarteiraMatch){ showToast('Falha ao carregar a leitura da planilha. Recarregue a página.'); return; }
+  const campos = CAMPOS.map(c=>({key:c.key, keywords:AUTO_KEYS[c.key]||[]}));
+  mapeamento = CarteiraMatch.autoMapearColunas(headers, campos);
 }
 
 function renderMapeamento(){
@@ -649,6 +656,7 @@ function baixarModeloPlanilha(){
 }
 
 function converter(){
+  if(!window.CarteiraMatch){ showToast('Falha ao carregar a leitura da planilha. Recarregue a página.'); return; }
   if(mapeamento['nome']===undefined){showToast('⚠️ Selecione a coluna Nome');return;}
   const vinculoPadrao = document.getElementById('vinculoDefault')?.value || 'matricula';
 
@@ -669,8 +677,12 @@ function converter(){
     };
   }).filter(Boolean);
 
+  escolhasTreinador = {};
+  revisaoPronta = false;
+  listaTreinadores = [];
   renderRevisao();
   irStep(3);
+  prepararRevisaoTreinadores();
 }
 
 function normData(v){
@@ -684,6 +696,19 @@ function normData(v){
   if((m=v.match(/^(\d{2})\/(\d{2})\/(\d{2})$/))){ const a=parseInt(m[3])<50?'20'+m[3]:'19'+m[3]; return `${m[1]}/${m[2]}/${a}`; }
   if(/^\d{5}$/.test(v)){ const d=new Date((parseInt(v)-25569)*86400*1000); return d.toLocaleDateString('pt-BR'); }
   return v;
+}
+
+function escHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function rotuloTreinadorLinha(nomeCsv){
+  if(!revisaoPronta || !window.CarteiraMatch) return nomeCsv || '—';
+  const chave = CarteiraMatch.normalizarNome(nomeCsv);
+  const escolha = escolhasTreinador[chave] || '';
+  if(!escolha) return 'Sem treinador';
+  const t = listaTreinadores.find(x => x.id===escolha);
+  return t ? t.nome : 'Treinador escolhido';
 }
 
 function renderRevisao(){
@@ -714,23 +739,165 @@ function renderRevisao(){
   if(vencidos) al+=`<div class="alert alert-warn"><span>⚠️</span><div>${vencidos} plano(s) já vencido(s) — verifique se são alunos a renovar</div></div>`;
   if(!semPlano&&!semVenc) al+=`<div class="alert alert-ok"><span>✅</span><div>Todos os registros completos e prontos para importar</div></div>`;
   document.getElementById('alertasDiv').innerHTML=al;
+  renderPreviewAlunos();
+}
 
-  document.getElementById('previewTbody').innerHTML=dadosConvertidos.slice(0,10).map((r,i)=>{
+function opcoesTreinador(selecionado){
+  const sem = `<option value="" ${selecionado?'':'selected'}>Sem treinador (não atribuir)</option>`;
+  const rest = listaTreinadores.map(t=>`<option value="${escHtml(t.id)}" ${t.id===selecionado?'selected':''}>${escHtml(t.nome)}</option>`).join('');
+  return sem+rest;
+}
+
+async function prepararRevisaoTreinadores(){
+  revisaoPronta = false;
+  const btn = document.getElementById('btnImportarAgora');
+  if(btn) btn.disabled = true;
+  const box = document.getElementById('revisaoTreinadores');
+  if(!window.CarteiraMatch){
+    box.innerHTML = '<div class="alert alert-err"><span>❌</span><div>Falha ao carregar a leitura da planilha. Recarregue a página.</div></div>';
+    return;
+  }
+  if(!sb || !academiaId){
+    box.innerHTML = '<div class="alert alert-err"><span>❌</span><div>Sessão sem academia. Entre de novo.</div></div>';
+    return;
+  }
+  box.textContent = 'Buscando treinadores da academia...';
+  const {data, error} = await sb.from('treinadores').select('id,nome').eq('academia_id', academiaId).order('nome');
+  if(error){
+    listaTreinadores = [];
+    box.innerHTML = `<div class="alert alert-err"><span>❌</span><div>Não consegui carregar os treinadores. Nada será importado até isso funcionar.<br>${escHtml(CarteiraMatch.msgErroSupabase(error))}</div><button class="btn-sec" style="margin-top:8px" onclick="prepararRevisaoTreinadores()">Tentar de novo</button></div>`;
+    return;
+  }
+  listaTreinadores = (data||[]).filter(t=>t && t.id);
+  desenharRevisaoTreinadores();
+  revisaoPronta = true;
+  if(btn) btn.disabled = false;
+}
+
+function desenharRevisaoTreinadores(){
+  const box = document.getElementById('revisaoTreinadores');
+  const listaEl = document.getElementById('listaTreinadoresRev');
+  const scroll = listaEl ? listaEl.scrollTop : 0;
+  const nomes = dadosConvertidos.map(r => r.treinadorNomeCsv || '');
+  const grupos = CarteiraMatch.agruparNomesPlanilha(nomes, listaTreinadores);
+  grupos.forEach(g=>{
+    if(escolhasTreinador[g.chave] === undefined){
+      const auto = (g.resolucao.status==='exato' || g.resolucao.status==='unico') ? g.resolucao.id : '';
+      escolhasTreinador[g.chave] = auto || '';
+    }
+  });
+  const semQtd = grupos.reduce((s,g)=> s + (escolhasTreinador[g.chave] ? 0 : g.qtd), 0);
+  grupos.sort((a,b)=>{
+    const ap = escolhasTreinador[a.chave] ? 0 : 1;
+    const bp = escolhasTreinador[b.chave] ? 0 : 1;
+    return bp - ap || b.qtd - a.qtd;
+  });
+
+  let aviso = '';
+  if(!listaTreinadores.length){
+    aviso = '<div class="alert alert-warn"><span>⚠️</span><div>Nenhum treinador cadastrado nesta academia. Os alunos entram sem responsável.</div></div>';
+  } else if(semQtd){
+    aviso = `<div class="alert alert-warn"><span>⚠️</span><div>${semQtd} aluno(s) ficam sem treinador. Aluno novo entra sem responsável. No modo atualizar, quem já tem treinador não perde o vínculo.</div></div>`;
+  } else {
+    aviso = '<div class="alert alert-ok"><span>✅</span><div>Todo aluno da planilha tem um treinador escolhido.</div></div>';
+  }
+  if(tipoPerfil==='treinador' && semQtd){
+    aviso += `<div class="alert alert-info"><span>💡</span><div>Você entrou como ${escHtml(perfilNome||'treinador')}. A planilha não atribui sozinha para você. Se a carteira é sua, escolha o seu nome.</div></div>`;
+  }
+
+  const aplicar = listaTreinadores.length ? `<div style="margin:8px 0 10px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Atribuir todos os que ficaram sem treinador a</div>
+      <select class="map-sel" onchange="if(this.value)aplicarTreinadorAosSem(this.value)">
+        <option value="">Escolher...</option>
+        ${listaTreinadores.map(t=>`<option value="${escHtml(t.id)}">${escHtml(t.nome)}</option>`).join('')}
+      </select>
+    </div>` : '';
+
+  const linhas = grupos.map(g=>{
+    const res = g.resolucao;
+    const escolha = escolhasTreinador[g.chave] || '';
+    let detalhe = '';
+    if(escolha && escolha !== res.id) detalhe = 'Treinador escolhido por você.';
+    else if(res.status==='exato') detalhe = `Reconhecido como ${escHtml(res.nome)}.`;
+    else if(res.status==='unico') detalhe = `Um único treinador combina: ${escHtml(res.nome)}. Confira antes de gravar.`;
+    else if(res.status==='ambiguo') detalhe = `Mais de um treinador combina (${res.candidatos.map(c=>escHtml(c.nome)).join(', ')}). Escolha qual.`;
+    else if(res.status==='vazio') detalhe = 'Estas linhas vieram sem treinador.';
+    else detalhe = 'Nome não reconhecido. Escolha na lista ou deixe sem atribuição.';
+    const cor = escolha ? 'var(--green)' : 'var(--yellow)';
+    const borda = escolha ? 'var(--border)' : 'rgba(234,179,8,.35)';
+    return `<div style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--card2);border:1px solid ${borda};border-radius:8px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${escHtml(g.rotulo)}</div>
+        <div style="font-size:11px;color:var(--muted);white-space:nowrap">${g.qtd} aluno(s)</div>
+      </div>
+      <div style="font-size:11px;color:${cor}">${detalhe}</div>
+      <select class="map-sel ${escolha?'ok':''}" data-chave="${escHtml(g.chave)}" onchange="escolherTreinador(this)">${opcoesTreinador(escolha)}</select>
+    </div>`;
+  }).join('');
+
+  box.innerHTML = aviso + aplicar + `<div class="treinador-lista" id="listaTreinadoresRev">${linhas}</div>`;
+  const novaLista = document.getElementById('listaTreinadoresRev');
+  if(novaLista) novaLista.scrollTop = scroll;
+  renderPreviewAlunos();
+}
+
+function renderPreviewAlunos(){
+  const tbody = document.getElementById('previewTbody');
+  if(!tbody || !dadosConvertidos.length) return;
+  tbody.innerHTML = dadosConvertidos.slice(0,10).map((r,i)=>{
     const vok=r.vencimento&&/^\d{2}\/\d{2}\/\d{4}$/.test(r.vencimento);
     const [d,m,a]=vok?r.vencimento.split('/').map(Number):[];
     const venc=vok&&new Date(a,m-1,d)<new Date();
-    return `<tr><td class="dim">${i+1}</td><td class="ok">${r.nome}</td><td class="dim">${r.matricula||'—'}</td><td class="${r.plano?'ok':'warn'}">${r.plano||'mensal*'}</td><td class="${venc?'err':vok?'ok':'warn'}">${r.vencimento||'—'}</td><td class="dim">${r.idade||'—'}</td><td class="dim">${r.telefone||'—'}</td><td class="${venc?'err':'ok'}">${venc?'⚠️':'✅'}</td></tr>`;
+    const treinadorTxt = rotuloTreinadorLinha(r.treinadorNomeCsv);
+    const semTreinador = revisaoPronta && treinadorTxt==='Sem treinador';
+    return `<tr><td class="dim">${i+1}</td><td class="ok">${escHtml(r.nome)}</td><td class="dim">${escHtml(r.matricula)||'—'}</td><td class="${r.plano?'ok':'warn'}">${escHtml(r.plano)||'mensal*'}</td><td class="${venc?'err':vok?'ok':'warn'}">${escHtml(r.vencimento)||'—'}</td><td class="dim">${escHtml(r.idade)||'—'}</td><td class="dim">${escHtml(r.telefone)||'—'}</td><td class="${semTreinador?'warn':'ok'}">${escHtml(treinadorTxt)}</td><td class="${venc?'err':'ok'}">${venc?'⚠️':'✅'}</td></tr>`;
   }).join('');
+}
+
+function escolherTreinador(sel){
+  escolhasTreinador[sel.getAttribute('data-chave')] = sel.value;
+  desenharRevisaoTreinadores();
+}
+
+function aplicarTreinadorAosSem(id){
+  if(!id || !listaTreinadores.some(t=>t.id===id)) return;
+  Object.keys(escolhasTreinador).forEach(chave=>{
+    if(!escolhasTreinador[chave]) escolhasTreinador[chave] = id;
+  });
+  desenharRevisaoTreinadores();
+}
+
+function decisaoDaLinha(nomeCsv, acao){
+  const res = CarteiraMatch.resolverTreinador(nomeCsv, listaTreinadores);
+  const chave = CarteiraMatch.normalizarNome(nomeCsv);
+  let escolha = Object.prototype.hasOwnProperty.call(escolhasTreinador, chave) ? escolhasTreinador[chave] : undefined;
+  if(escolha && !listaTreinadores.some(t=>t.id===escolha)) escolha = '';
+  return CarteiraMatch.decidirGravacao(res, escolha, acao);
 }
 
 // ── IMPORTAR ──────────────────────────────────────────────────
 async function importar(){
-  const modo = document.querySelector('input[name="modoImport"]:checked').value;
-  if(modo==='substituir'&&!confirm(`⚠️ ATENÇÃO\n\nIsso vai APAGAR todos os alunos atuais da carteira e substituir pelos ${dadosConvertidos.length} do arquivo.\n\nTem certeza?`)) return;
+  if(importando) return;
+  if(!window.CarteiraMatch){ showToast('Falha ao carregar a leitura da planilha. Recarregue a página.'); irStep(3); return; }
+  if(!revisaoPronta){ showToast('Espere a revisão dos treinadores terminar'); irStep(3); return; }
 
+  const modo = document.querySelector('input[name="modoImport"]:checked').value;
+  if(modo==='substituir'&&!confirm(`ATENÇÃO\n\nIsso apaga todos os alunos atuais desta academia e grava a lista nova (${dadosConvertidos.length}).\n\nSe alguma linha falhar, ela não entra, e o aluno antigo dessa linha já terá sido removido.\n\nTem certeza?`)){
+    irStep(3);
+    return;
+  }
+
+  importando = true;
   const log = document.getElementById('importLog');
   log.style.display='block'; log.innerHTML='';
-  const addLog = msg=>{ log.innerHTML+=msg+'\n'; log.scrollTop=log.scrollHeight; };
+  const voltar = document.getElementById('btnVoltarRevisao');
+  if(voltar) voltar.style.display='none';
+  const addLog = msg=>{
+    const line = document.createElement('div');
+    line.textContent = msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  };
 
   const setStep=(id,status)=>{
     const el=document.getElementById(id);
@@ -740,93 +907,141 @@ async function importar(){
     else el.innerHTML=`<span class="prog-icon">${icons[status]}</span> ${el.textContent.replace(/[⏳✅❌]/,'').trim()}`;
   };
 
+  const abortar = msg=>{
+    addLog('Parado: '+msg);
+    showToast(msg);
+    ['prog1','prog2','prog3','prog4'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el.classList.contains('loading')) el.className='prog-step err';
+    });
+    if(voltar) voltar.style.display='block';
+  };
+
   try {
-    // 1. Verificar sessão
     setStep('prog1','loading');
-    await new Promise(r=>setTimeout(r,400));
-    setStep('prog1','done');
-    addLog(`✓ Academia: ${academiaId}`);
-
-    // 2. Verificar existentes
-    setStep('prog2','loading');
-    const {data:existentes} = await sb.from('alunos').select('id,matricula,nome').eq('academia_id',academiaId);
-    const existMap = {};
-    (existentes||[]).forEach(a=>{ if(a.matricula) existMap[a.matricula]=a.id; existMap['n:'+a.nome.toLowerCase()]=a.id; });
-    const {data:treinadoresAcad} = await sb.from('treinadores').select('id,nome').eq('academia_id',academiaId);
-    const listaTreinadores = treinadoresAcad||[];
-    function resolverTreinadorId(nomeCsv){
-      if(!nomeCsv) return treinadorId;
-      const alvo = nomeCsv.toLowerCase().trim();
-      const achado = listaTreinadores.find(t=>t.nome.toLowerCase().trim()===alvo)
-        || listaTreinadores.find(t=>t.nome.toLowerCase().includes(alvo)||alvo.includes(t.nome.toLowerCase()));
-      return achado ? achado.id : treinadorId;
+    const {data:sessao, error:erroSessao} = await sb.auth.getSession();
+    if(erroSessao || !sessao || !sessao.session){
+      setStep('prog1','err');
+      abortar('Sessão expirada. Entre de novo. Nada foi gravado.');
+      return;
     }
-    setStep('prog2','done');
-    addLog(`✓ ${(existentes||[]).length} alunos já cadastrados · ${listaTreinadores.length} treinadores na academia`);
+    setStep('prog1','done');
+    addLog('Sessão ok. Academia conferida.');
 
-    // 3. Importar
+    setStep('prog2','loading');
+    const ex = await sb.from('alunos').select('id,matricula,nome').eq('academia_id',academiaId);
+    if(ex.error){
+      setStep('prog2','err');
+      abortar('Não li os alunos já cadastrados. Nada foi gravado. '+CarteiraMatch.msgErroSupabase(ex.error));
+      return;
+    }
+    const existentes = ex.data || [];
+    const existMap = {};
+    existentes.forEach(a=>{
+      if(a.matricula) existMap[String(a.matricula)] = a.id;
+      if(a.nome) existMap['n:'+a.nome.toLowerCase()] = a.id;
+    });
+    setStep('prog2','done');
+    addLog(existentes.length+' aluno(s) já cadastrados. '+listaTreinadores.length+' treinador(es) na revisão.');
+
     setStep('prog3','loading');
     let inseridos=0, atualizados=0, ignorados=0;
+    const falhas=[];
 
     if(modo==='substituir'){
-      await sb.from('alunos').delete().eq('academia_id',academiaId);
-      addLog(`⚠️ Carteira anterior removida`);
+      const del = await sb.from('alunos').delete().eq('academia_id',academiaId);
+      if(del.error){
+        setStep('prog3','err');
+        abortar('Não consegui apagar a carteira atual. Nada novo foi gravado. '+CarteiraMatch.msgErroSupabase(del.error));
+        return;
+      }
+      addLog('Carteira anterior removida.');
     }
 
-    // Processar em lotes de 50
     const LOTE=50;
     for(let i=0;i<dadosConvertidos.length;i+=LOTE){
       const lote=dadosConvertidos.slice(i,i+LOTE);
       for(const r of lote){
         const venc = r.vencimento ? (() => { const [d,m,a]=r.vencimento.split('/'); return `${a}-${m}-${d}`; })() : null;
         const statusC = r.status_contato || 'ativo';
-        const payload = {
-          academia_id:academiaId, treinador_id:resolverTreinadorId(r.treinadorNomeCsv),
+        const base = {
+          academia_id:academiaId,
           nome:r.nome, matricula:r.matricula||null,
           plano:r.plano||'mensal', vencimento:venc,
           idade:parseInt(r.idade)||null, telefone:r.telefone||null,
           email:r.email||null, status_contato:statusC, ativo: statusC!=='ex_aluno',
           tipo_vinculo:r.tipo_vinculo||'matricula',
         };
-
-        const existId = r.matricula ? existMap[r.matricula] : existMap['n:'+r.nome.toLowerCase()];
-
-        if(existId && modo==='atualizar'){
-          await sb.from('alunos').update({plano:payload.plano,vencimento:payload.vencimento,telefone:payload.telefone,idade:payload.idade,tipo_vinculo:payload.tipo_vinculo,email:payload.email,status_contato:payload.status_contato,ativo:payload.ativo,treinador_id:payload.treinador_id}).eq('id',existId);
-          atualizados++;
-        } else if(existId && modo==='adicionar'){
+        const existId = modo==='substituir' ? null : (r.matricula ? existMap[String(r.matricula)] : (r.nome ? existMap['n:'+r.nome.toLowerCase()] : null));
+        if(existId && modo==='adicionar'){
           ignorados++;
+          continue;
+        }
+        const acao = (existId && modo==='atualizar') ? 'update' : 'insert';
+        const decisao = decisaoDaLinha(r.treinadorNomeCsv, acao);
+        const payload = CarteiraMatch.aplicarTreinadorNoPayload(base, decisao);
+        const resOp = acao==='update'
+          ? await sb.from('alunos').update(payload).eq('id', existId).select('id')
+          : await sb.from('alunos').insert([payload]).select('id');
+        if(resOp.error || !resOp.data || !resOp.data.length){
+          const motivo = resOp.error ? CarteiraMatch.msgErroSupabase(resOp.error) : 'O banco não confirmou a gravação desta linha.';
+          falhas.push({nome:r.nome || '(sem nome)', motivo});
+          addLog('Falhou: '+(r.nome||'(sem nome)')+' - '+motivo);
+        } else if(acao==='update'){
+          atualizados++;
         } else {
-          await sb.from('alunos').insert([payload]);
           inseridos++;
         }
       }
-      addLog(`Processados: ${Math.min(i+LOTE,dadosConvertidos.length)}/${dadosConvertidos.length}`);
+      addLog('Processados: '+Math.min(i+LOTE,dadosConvertidos.length)+'/'+dadosConvertidos.length);
     }
 
-    setStep('prog3','done');
-    addLog(`✓ Inseridos: ${inseridos} · Atualizados: ${atualizados} · Ignorados: ${ignorados}`);
+    setStep('prog3', falhas.length ? 'err' : 'done');
+    addLog('Inseridos: '+inseridos+' · Atualizados: '+atualizados+' · Já existiam: '+ignorados+' · Falhas: '+falhas.length);
 
-    // 4. Finalizar
     setStep('prog4','loading');
-    await new Promise(r=>setTimeout(r,400));
+    await new Promise(r=>setTimeout(r,300));
     setStep('prog4','done');
 
-    // Sucesso
-    document.getElementById('successSub').textContent=`${inseridos} aluno(s) adicionado(s)${atualizados?', '+atualizados+' atualizado(s)':''}${ignorados?' ('+ignorados+' já existiam)':''}.`;
+    const titulo = document.getElementById('successTitle');
+    const icone = document.getElementById('successIcon');
+    if(falhas.length && inseridos+atualizados===0){
+      titulo.textContent = 'Nenhum aluno foi gravado';
+      titulo.style.color = 'var(--red)';
+      icone.textContent = '⚠️';
+    } else if(falhas.length){
+      titulo.textContent = 'Importação parcial';
+      titulo.style.color = 'var(--yellow)';
+      icone.textContent = '⚠️';
+    } else {
+      titulo.textContent = 'Carteira atualizada!';
+      titulo.style.color = 'var(--green)';
+      icone.textContent = '🎉';
+    }
+    document.getElementById('successSub').textContent =
+      inseridos+' aluno(s) adicionado(s)'
+      +(atualizados ? ', '+atualizados+' atualizado(s)' : '')
+      +(ignorados ? ' ('+ignorados+' já existiam)' : '')
+      +(falhas.length ? '. '+falhas.length+' linha(s) não foram gravadas.' : '.');
     document.getElementById('successStats').innerHTML=`
       <div class="success-stat"><div class="success-stat-val" style="color:var(--green)">${inseridos}</div><div class="success-stat-label">Inseridos</div></div>
       <div class="success-stat"><div class="success-stat-val" style="color:var(--blue)">${atualizados}</div><div class="success-stat-label">Atualizados</div></div>
       <div class="success-stat"><div class="success-stat-val">${ignorados}</div><div class="success-stat-label">Já existiam</div></div>
-      <div class="success-stat"><div class="success-stat-val" style="color:var(--orange)">${dadosConvertidos.length}</div><div class="success-stat-label">Total</div></div>`;
+      <div class="success-stat"><div class="success-stat-val" style="color:${falhas.length?'var(--red)':'var(--orange)'}">${falhas.length}</div><div class="success-stat-label">Falhas</div></div>`;
+    const boxFalhas = document.getElementById('successFalhas');
+    if(!falhas.length) boxFalhas.innerHTML = '';
+    else {
+      const linhas = falhas.slice(0,40).map(f=>escHtml(f.nome)+' - '+escHtml(f.motivo)).join('<br>');
+      const resto = falhas.length>40 ? '<br>e mais '+(falhas.length-40)+' linha(s).' : '';
+      boxFalhas.innerHTML = `<div class="alert alert-err" style="display:block"><div style="font-weight:700;margin-bottom:6px">${falhas.length} linha(s) não gravadas</div><div style="max-height:180px;overflow:auto;font-family:'DM Mono',monospace;font-size:11px;line-height:1.45">${linhas}${resto}</div></div>`;
+    }
 
-    setTimeout(()=>{ irStep(5); }, 800);
+    setTimeout(()=>{ irStep(5); }, 600);
 
   } catch(err){
-    showToast('Erro: '+err.message);
-    ['prog1','prog2','prog3','prog4'].forEach(id=>{
-      if(document.getElementById(id).classList.contains('loading')) document.getElementById(id).className='prog-step err';
-    });
+    abortar(err && err.message ? err.message : 'Erro inesperado. Confira o que foi gravado antes de tentar de novo.');
+  } finally {
+    importando = false;
   }
 }
 
@@ -846,10 +1061,17 @@ function irStep(n){
 
 function novaImportacao(){
   rawRows=[]; headers=[]; mapeamento={}; planoMap={}; dadosConvertidos=[];
+  listaTreinadores=[]; escolhasTreinador={}; revisaoPronta=false;
   document.getElementById('fileInput').value='';
   document.getElementById('fileInfo').style.display='none';
   document.getElementById('btnProStep1').disabled=true;
+  const btnImp = document.getElementById('btnImportarAgora');
+  if(btnImp) btnImp.disabled = true;
   document.getElementById('importLog').innerHTML='';
+  const voltar = document.getElementById('btnVoltarRevisao');
+  if(voltar) voltar.style.display='none';
+  const boxFalhas = document.getElementById('successFalhas');
+  if(boxFalhas) boxFalhas.innerHTML='';
   ['prog1','prog2','prog3','prog4'].forEach(id=>{document.getElementById(id).className='prog-step idle';});
   irStep(1);
 }
